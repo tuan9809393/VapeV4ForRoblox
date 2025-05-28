@@ -855,7 +855,7 @@ run(function()
 				local rightClicked = not RightClick.Enabled or inputService:IsMouseButtonPressed(1)
 				AimAssist:Clean(runService.RenderStepped:Connect(function(dt)
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = screenCenter
 					end
 	
 					if rightClicked and not vape.gui.ScaledGui.ClickGui.Visible then
