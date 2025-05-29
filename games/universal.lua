@@ -7889,6 +7889,8 @@ run(function()
 	corner.CornerRadius = UDim.new(0, 4)
 	corner.Parent = label
 end)
+																																																																																																																																																																																																																
+run(function()																																																																																																																																																																																																															
 local BulletTracers
 	local Material
 	local Color
