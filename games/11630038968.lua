@@ -278,6 +278,7 @@ run(function()
 	local ParticleColor1
 	local ParticleColor2
 	local ParticleSize
+	local Face
 	local LegitAura
 	local Particles, Boxes, AttackDelay, SwingDelay, ClickDelay = {}, {}, tick(), tick(), tick()
 	local lMouse = cloneref(lplr:GetMouse())
@@ -388,6 +389,11 @@ run(function()
 					for i, v in Particles do
 						v.Position = attacked[i] and attacked[i].Entity.RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
 						v.Parent = attacked[i] and gameCamera or nil
+					end
+
+					if Face.Enabled and attacked[1] then
+						local vec = attacked[1].Entity.RootPart.Position * Vector3.new(1, 0, 1)
+						entitylib.character.RootPart.CFrame = CFrame.lookAt(entitylib.character.RootPart.Position, Vector3.new(vec.X, entitylib.character.RootPart.Position.Y + 0.01, vec.Z))
 					end
 	
 					task.wait()
@@ -576,7 +582,9 @@ run(function()
 			end
 		end,
 		Darker = true,
-		Visible = false
+		Visible = false})
+	})
+	Face = Killaura:CreateToggle({Name = 'Face target'})
 	})
 	LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
