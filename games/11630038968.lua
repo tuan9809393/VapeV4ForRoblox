@@ -582,9 +582,9 @@ run(function()
 			end
 		end,
 		Darker = true,
-		Visible = false})
+		Visible = false
 	})
-	Face = Killaura:CreateToggle(Name = 'Face target') 
+	Face = Killaura:CreateToggle({Name = 'no'}) 
 	})
 	LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
