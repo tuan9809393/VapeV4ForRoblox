@@ -99,7 +99,7 @@ run(function()
 	end)
 end)
 
-for _, v in {'Reach', 'SilentAim', 'Disabler', 'HitBoxes', 'MurderMystery', 'AutoRejoin'} do
+for _, v in {'Reach', 'Disabler', 'HitBoxes', 'MurderMystery', 'AutoRejoin'} do
 	vape:Remove(v)
 end
 run(function()
@@ -278,7 +278,6 @@ run(function()
 	local ParticleColor1
 	local ParticleColor2
 	local ParticleSize
-	local Face
 	local LegitAura
 	local Particles, Boxes, AttackDelay, SwingDelay, ClickDelay = {}, {}, tick(), tick(), tick()
 	local lMouse = cloneref(lplr:GetMouse())
@@ -389,14 +388,8 @@ run(function()
 					for i, v in Particles do
 						v.Position = attacked[i] and attacked[i].Entity.RootPart.Position or Vector3.new(9e9, 9e9, 9e9)
 						v.Parent = attacked[i] and gameCamera or nil
-					
 					end
-					if Face.Enabled and attacked[1] then
-					local Direction = (Vector3.new(Entity:FindFirstChild("HumanoidRootPart").Position.X, LocalPlayer.Character:FindFirstChild("HumanoidRootPart").Position.Y, Entity:FindFirstChild("HumanoidRootPart").Position.Z) - LocalPlayer.Character:FindFirstChild("HumanoidRootPart").Position).Unit
-  					local LookCFrame = (CFrame.new(Vector3.zero, (LocalPlayer.Character:FindFirstChild("HumanoidRootPart").CFrame):VectorToObjectSpace(Direction)))
-   					if LocalPlayer.Character:WaitForChild("Head"):FindFirstChild("Neck") and LocalPlayer.Character:WaitForChild("LowerTorso"):FindFirstChild("Root") then
-					end
-				end
+	
 					task.wait()
 				until not Killaura.Enabled
 			else
@@ -585,7 +578,6 @@ run(function()
 		Darker = true,
 		Visible = false
 	})
-	Face = Killaura:CreateToggle({Name = 'Face target'})
 	LegitAura = Killaura:CreateToggle({
 		Name = 'Swing only',
 		Function = function()
