@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/tuan9809393/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -565,12 +565,12 @@ run(function()
 	function whitelist:update(first)
 		local suc = pcall(function()
 			local _, subbed = pcall(function()
-				return game:HttpGet('https://github.com/7GrandDadPGN/whitelists')
+				return game:HttpGet('https://github.com/tuan9809393/whitelists')
 			end)
 			local commit = subbed:find('currentOid')
 			commit = commit and subbed:sub(commit + 13, commit + 52) or nil
 			commit = commit and #commit == 40 and commit or 'main'
-			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/whitelists/'..commit..'/PlayerWhitelist.json', true)
+			whitelist.textdata = game:HttpGet('https://raw.githubusercontent.com/tuan9809393/whitelists/'..commit..'/PlayerWhitelist.json', true)
 		end)
 		if not suc or not hash or not whitelist.get then return true end
 		whitelist.loaded = true
@@ -855,7 +855,7 @@ run(function()
 				local rightClicked = not RightClick.Enabled or inputService:IsMouseButtonPressed(1)
 				AimAssist:Clean(runService.RenderStepped:Connect(function(dt)
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = screencerter
 					end
 	
 					if rightClicked and not vape.gui.ScaledGui.ClickGui.Visible then
@@ -1283,7 +1283,7 @@ run(function()
 
 				repeat
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = screencerter
 					end
 					if AutoFire.Enabled then
 						local origin = AutoFireMode.Value == 'Camera' and gameCamera.CFrame or entitylib.isAlive and entitylib.character.RootPart.CFrame or CFrame.identity
@@ -2702,7 +2702,7 @@ run(function()
 	rayCheck.RespectCanCollide = true
 	
 	local function getWaypointInMouse()
-		local returned, distance, mouseLocation = nil, math.huge, inputService:GetMouseLocation()
+		local returned, distance, mouseLocation = nil, math.huge, screencerter
 		for _, v in WaypointFolder:GetChildren() do
 			local position, vis = gameCamera:WorldToViewportPoint(v.StudsOffsetWorldSpace)
 			if not vis then continue end
