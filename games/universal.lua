@@ -7841,6 +7841,15 @@ run(function()
 	})
 end)
 
+run(function()
+	local BulletTracers
+	local Material
+	local Color
+	local Lifetime
+	local Fade
+	local DrawingToggle
+	local drawingobjs = {}
+
 BulletTracers = vape.Legit:CreateModule({
 		Name = 'BulletTracers',
 		Function = function(callback)
