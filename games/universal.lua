@@ -7854,7 +7854,7 @@ BulletTracers = vape.Legit:CreateModule({
 		Name = 'BulletTracers',
 		Function = function(callback)
 			if callback then 
-				BulletTracers:Clean(hookEvent('SPAWN_FPV_SOL_BULLET', function(id, btype, origin, velocity)
+				BulletTracers:Clean(hookEvent('WeaponHandler', function(id, btype, origin, velocity)
 					if DrawingToggle.Enabled then 
 						local obj = Drawing.new('Line')
 						obj.Color = Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
