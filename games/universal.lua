@@ -6106,6 +6106,8 @@ run(function()
 		Name = 'Send threshold',
 		Min = 0,
 		Max = 1,
+		DefaultMin = 8,
+		DefaultMax = 12,
 		Decimal = 100,
 		Darker = true,
 		Visible = false,
