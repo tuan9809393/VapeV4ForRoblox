@@ -419,7 +419,7 @@ run(function()
 	
 				repeat
 					if CircleObject then 
-						CircleObject.Position = inputService:GetMouseLocation() 
+						CircleObject.Position = screencerter
 					end
 	
 					if Instant.Enabled then 
