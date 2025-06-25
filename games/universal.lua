@@ -7608,7 +7608,7 @@ run(function()
         animate.idle.Animation2.AnimationId = AnimList.Animation2[AnimIdleB.Value]
         task.wait(4.5)
     end
-	AnimationChanger = vape.Categories.Misc:CreateModule({
+	AnimationChanger = vape.Categories.Legit:CreateModule({
 		Name = "AnimationChanger",
 		Function = function(callback)
 			if callback then
