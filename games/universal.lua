@@ -1300,8 +1300,8 @@ run(function()
     						if delayCheck < tick() then
         					local handleAction = getfenv()["handleAction"]
         					if handleAction then
-            				handleAction("Shoot")
-            				delayCheck = tick() + AutoFireShootDelay.Value
+            					handleAction("Shoot")
+            					delayCheck = tick() + AutoFireShootDelay.Value
        						end
     					end
 					end
