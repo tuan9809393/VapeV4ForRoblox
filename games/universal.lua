@@ -1296,14 +1296,24 @@ run(function()
 							NPCs = Target.NPCs.Enabled
 						})
 
-						if ent and canClick() then
-    						if delayCheck < tick() then
-        					local handleAction = getfenv()["handleAction"]
-        					if handleAction then
-            					handleAction("Shoot")
-            					delayCheck = tick() + AutoFireShootDelay.Value
-       						end
-    					end
+						if mouse1click and (isrbxactive or iswindowactive)() then
+							if ent and canClick() then
+								if delayCheck < tick() then
+									if mouseClicked then
+										mouse1release()
+										delayCheck = tick() + AutoFireShootDelay.Value
+									else
+										mouse1press()
+									end
+									mouseClicked = not mouseClicked
+								end
+							else
+								if mouseClicked then
+									mouse1release()
+								end
+								mouseClicked = false
+							end
+						end
 					end
 					task.wait()
 				until not SilentAim.Enabled
