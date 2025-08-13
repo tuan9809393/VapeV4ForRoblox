@@ -5910,7 +5910,7 @@ end)
 	
 run(function()
 	local AnimationPlayer
-	local IDBox
+	local List
 	local Priority
 	local Speed
 	local anim, animobject
@@ -5947,9 +5947,9 @@ run(function()
 			if callback then
 				animobject = Instance.new('Animation')
 				local suc, id = pcall(function()
-					return string.match(game:GetObjects('rbxassetid://'..IDBox.Value)[1].AnimationId, '%?id=(%d+)')
+					return string.match(game:GetObjects('rbxassetid://'..List.Value)[1].AnimationId, '%?id=(%d+)')
 				end)
-				animobject.AnimationId = 'rbxassetid://'..(suc and id or IDBox.Value)
+				animobject.AnimationId = 'rbxassetid://'..(suc and id or List.Value)
 	
 				if entitylib.isAlive then
 					playAnimation(entitylib.character)
