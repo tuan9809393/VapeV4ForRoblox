@@ -5947,9 +5947,9 @@ run(function()
 			if callback then
 				animobject = Instance.new('Animation')
 				local suc, id = pcall(function()
-					return string.match(game:GetObjects('rbxassetid://'..List.Value)[1].AnimationId, '%?id=(%d+)')
+					return string.match(game:GetObjects('rbxassetid://'..IDBox.Value)[1].AnimationId, '%?id=(%d+)')
 				end)
-				animobject.AnimationId = 'rbxassetid://'..(suc and id or List.Value)
+				animobject.AnimationId = 'rbxassetid://'..(suc and id or IDBox.Value)
 	
 				if entitylib.isAlive then
 					playAnimation(entitylib.character)
@@ -5964,7 +5964,7 @@ run(function()
 		end,
 		Tooltip = 'Plays a specific animation of your choosing at a certain speed'
 	})
-	List = AnimationPlayer:CreateTextList({
+	IDBox = AnimationPlayer:CreateTextBox({
 		Name = 'Animation',
 		Placeholder = 'anim (num only)',
 		Function = function(enter)
