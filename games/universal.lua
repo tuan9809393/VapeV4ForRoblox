@@ -5964,7 +5964,7 @@ run(function()
 		end,
 		Tooltip = 'Plays a specific animation of your choosing at a certain speed'
 	})
-	IDBox = AnimationPlayer:CreateTextBox({
+	List = AnimationPlayer:CreateTextList({
 		Name = 'Animation',
 		Placeholder = 'anim (num only)',
 		Function = function(enter)
