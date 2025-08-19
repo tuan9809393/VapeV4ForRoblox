@@ -2157,6 +2157,7 @@ run(function()
 								modified[part] = part.Size
 							end
 							part.Size = modified[part] + Vector3.new(Expand.Value, Expand.Value, Expand.Value)
+							part.CanCollide = false
 						end
 					end
 					task.wait()
