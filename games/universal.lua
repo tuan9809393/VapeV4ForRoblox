@@ -2158,7 +2158,6 @@ run(function()
 							end
 							part.Size = modified[part] + Vector3.new(Expand.Value, Expand.Value, Expand.Value)
 							part.CanCollide = false
-							part.Transparency = 0.8 - Color.Opacity
 						end
 					end
 					task.wait()
