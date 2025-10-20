@@ -2955,12 +2955,13 @@ run(function()
 		Visible = false
 	})
 end)
-	
+
 run(function()
 	local Speed
 	local Mode
 	local Options
 	local AutoJump
+	local OnlyKillaura
 	local AutoJumpCustom
 	local AutoJumpValue
 	local w, s, a, d = 0, 0, 0, 0
@@ -2975,10 +2976,9 @@ run(function()
 					if entitylib.isAlive and not Fly.Enabled and not LongJump.Enabled then
 						local state = entitylib.character.Humanoid:GetState()
 						if state == Enum.HumanoidStateType.Climbing then return end
-	
 						local movevec = TargetStrafeVector or Options.MoveMethod.Value == 'Direct' and calculateMoveVector(Vector3.new(a + d, 0, w + s)) or entitylib.character.Humanoid.MoveDirection
 						SpeedMethods[Mode.Value](Options, movevec, dt)
-						if AutoJump.Enabled and entitylib.character.Humanoid.FloorMaterial ~= Enum.Material.Air and movevec ~= Vector3.zero then
+						if AutoJump.Enabled and entitylib.character.Humanoid.FloorMaterial ~= Enum.Material.Air and movevec ~= Vector3.zero and (OnlyKillaura.Enabled and shared.vape.Attacking or not OnlyKillaura.Enabled) then
 							if AutoJumpCustom.Enabled then
 								local velocity = entitylib.character.RootPart.Velocity * Vector3.new(1, 0, 1)
 								entitylib.character.RootPart.Velocity = Vector3.new(velocity.X, AutoJumpValue.Value, velocity.Z)
@@ -3030,7 +3030,7 @@ run(function()
 				Speed:Toggle()
 			end
 		end,
-		Tooltip = 'Velocity - Uses smooth physics based movement\nImpulse - Same as velocity while using forces instead\nCFrame - Directly adjusts the position of the root\nTP - Large teleports within intervals\nPulse - Controllable bursts of speed\nWalkSpeed - The classic mode of speed, usually detected on most games.'
+		Tooltip = 'Velocity - Uses smooth physics based movement\nCFrame - Directly adjusts the position of the root\nTP - Large teleports within intervals\nPulse - Controllable bursts of speed\nWalkSpeed - The classic mode of speed, usually detected on most games.'
 	})
 	Options = {
 		MoveMethod = Speed:CreateDropdown({
@@ -3104,7 +3104,14 @@ run(function()
 		Name = 'AutoJump',
 		Function = function(callback)
 			AutoJumpCustom.Object.Visible = callback
+			OnlyKillaura.Object.Visible = callback
 		end
+	})
+	OnlyKillaura = Speed:CreateToggle({
+		Name = 'Only Killaura',
+		Tooltip = 'Only jump when Killaura is attacking.',
+		Darker = true,
+		Visible = false
 	})
 	AutoJumpCustom = Speed:CreateToggle({
 		Name = 'Custom Jump',
