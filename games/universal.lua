@@ -5953,10 +5953,15 @@ run(function()
 		Name = 'AnimationPlayer',
 		Function = function(callback)
 			if callback then
-				animobject = Instance.new('Animation')
-				local suc, id = pcall(function()
-					return string.match(game:GetObjects('rbxassetid://'..IDBox.Value)[1].AnimationId, '%?id=(%d+)')
-				end)
+				local animobject = Instance.new('Animation')
+local yourAnimationId = "rbxassetid://18412345678" -- replace with your working animation
+animobject.AnimationId = yourAnimationId
+
+local humanoid = game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+if humanoid then
+	local track = humanoid:LoadAnimation(animobject)
+	track:Play()
+	end
 				animobject.AnimationId = 'rbxassetid://'..(suc and id or IDBox.Value)
 	
 				if entitylib.isAlive then
