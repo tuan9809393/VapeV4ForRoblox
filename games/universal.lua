@@ -1302,16 +1302,8 @@ run(function()
 								if delayCheck < tick() then
 										vim:SendTouchEvent(currentTouchId, 2, getShootPos())
 										delayCheck = tick() + AutoFireShootDelay.Value
-									else
-										currentTouchId = math.floor(tick() * 1000000) % 10000
-										vim:SendTouchEvent(currentTouchId, 0, getShootPos())
 									end
 								end
-							else
-								if mouseClicked then
-									vim:SendTouchEvent(currentTouchId, 2, getShootPos())
-								end
-								mouseClicked = false
 							end
 						end
 					end
