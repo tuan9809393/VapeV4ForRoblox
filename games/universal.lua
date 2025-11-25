@@ -1300,10 +1300,19 @@ run(function()
 						if isMobile then
 							if ent and canClick() then
 								if delayCheck < tick() then
-										vim:SendTouchEvent(currentTouchId, 2, getShootPos())
+									if mouseClicked then
+										mouse1release()
 										delayCheck = tick() + AutoFireShootDelay.Value
+									else
+										mouse1press()
 									end
+									mouseClicked = not mouseClicked
 								end
+							else
+								if mouseClicked then
+									mouse1release()
+								end
+								mouseClicked = false
 							end
 						end
 					end
