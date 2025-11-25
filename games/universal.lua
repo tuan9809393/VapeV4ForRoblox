@@ -1551,11 +1551,7 @@ run(function()
                     				task.wait()
                     				mouse1release()
 								end
-								delayCheck = tick() + ShootDelay.Value
-							end
-						else
-							if mouseClicked then
-								mouse1release()
+								delayCheck = tick() + ShootDelay.Vaule
 							end
 							mouseClicked = false
 						end
