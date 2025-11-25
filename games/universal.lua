@@ -1537,6 +1537,9 @@ run(function()
 		end
 	end
 	
+		end
+	end
+	
 	TriggerBot = vape.Categories.Combat:CreateModule({
 		Name = 'TriggerBot',
 		Function = function(callback)
@@ -1545,13 +1548,17 @@ run(function()
 					if mouse1click and (isrbxactive or iswindowactive)() then
 						if getTriggerBotTarget() and canClick() then
 							if delayCheck < tick() then
-									vim:SendTouchEvent()
+								if mouseClicked then
+									mouse1release()
+									delayCheck = tick() + ShootDelay.Value
 								else
 									mouse1press()
-                    				task.wait()
-                    				mouse1release()
 								end
-								delayCheck = tick() + ShootDelay.Vaule
+								mouseClicked = not mouseClicked
+							end
+						else
+							if mouseClicked then
+								mouse1release()
 							end
 							mouseClicked = false
 						end
@@ -1559,12 +1566,12 @@ run(function()
 					task.wait()
 				until not TriggerBot.Enabled
 			else
-				if isMobile and holdingFire then
-					local touchId = os.clock() * 1000000 % 1000000
-        			vim:SendTouchEvent()
-				elseif not isMobile and mouse1click then
-					pcall(mouse1release)
+				if mouse1click and (isrbxactive or iswindowactive)() then
+					if mouseClicked then
+						mouse1release()
+					end
 				end
+				mouseClicked = false
 			end
 		end,
 		Tooltip = 'Shoots people that enter your crosshair'
