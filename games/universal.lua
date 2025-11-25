@@ -34,6 +34,7 @@ local cloneref = cloneref or function(obj)
 	return obj
 end
 
+local vim = game:GetService("VirtualInputManager")
 local playersService = cloneref(game:GetService('Players'))
 local replicatedStorage = cloneref(game:GetService('ReplicatedStorage'))
 local runService = cloneref(game:GetService('RunService'))
