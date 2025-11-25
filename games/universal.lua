@@ -1297,20 +1297,21 @@ run(function()
 							NPCs = Target.NPCs.Enabled
 						})
 
-						if mouse1click and (isrbxactive or iswindowactive)() then
+						if isMobile then
 							if ent and canClick() then
 								if delayCheck < tick() then
 									if mouseClicked then
-										mouse1release()
+										vim:SendTouchEvent(currentTouchId, 2, getShootPos())
 										delayCheck = tick() + AutoFireShootDelay.Value
 									else
-										mouse1press()
+										currentTouchId = math.floor(tick() * 1000000) % 10000
+										vim:SendTouchEvent(currentTouchId, 0, getShootPos())
 									end
 									mouseClicked = not mouseClicked
 								end
 							else
 								if mouseClicked then
-									mouse1release()
+									vim:SendTouchEvent(currentTouchId, 2, getShootPos())
 								end
 								mouseClicked = false
 							end
