@@ -1545,13 +1545,13 @@ run(function()
 					if mouse1click and (isrbxactive or iswindowactive)() then
 						if getTriggerBotTarget() and canClick() then
 							if delayCheck < tick() then
-								if mouseClicked then
-									mouse1release()
-									delayCheck = tick() + ShootDelay.Value
+									vim:SendTouchEvent()
 								else
 									mouse1press()
+                    				task.wait()
+                    				mouse1release()
 								end
-								mouseClicked = not mouseClicked
+								delayCheck = tick() + ShootDelay.Value
 							end
 						else
 							if mouseClicked then
@@ -1563,12 +1563,12 @@ run(function()
 					task.wait()
 				until not TriggerBot.Enabled
 			else
-				if mouse1click and (isrbxactive or iswindowactive)() then
-					if mouseClicked then
-						mouse1release()
-					end
+				if isMobile and holdingFire then
+					local touchId = os.clock() * 1000000 % 1000000
+        			vim:SendTouchEvent()
+				elseif not isMobile and mouse1click then
+					pcall(mouse1release)
 				end
-				mouseClicked = false
 			end
 		end,
 		Tooltip = 'Shoots people that enter your crosshair'
