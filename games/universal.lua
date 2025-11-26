@@ -7920,7 +7920,6 @@ run(function()
 		end
 	})
 	
-end)																																																																																																																																														
 	run(function()
 		local InfiniteJump
 		local Mode
