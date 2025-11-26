@@ -1012,7 +1012,7 @@ run(function()
 				repeat
 					if Mode.Value == 'Tool' then
 						local tool = getTool()
-						if tool and inputService:IsMouseButtonPressed(0) then
+						if tool then
 							tool:Activate()
 						end
 					else
@@ -1283,7 +1283,7 @@ run(function()
 
 				repeat
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = screencenter
 					end
 					if AutoFire.Enabled then
 						local origin = AutoFireMode.Value == 'Camera' and gameCamera.CFrame or entitylib.isAlive and entitylib.character.RootPart.CFrame or CFrame.identity
@@ -7920,5 +7920,176 @@ run(function()
 		end
 	})
 	
-end)
-	
+end)																																																																																																																																														
+	run(function()
+		local InfiniteJump
+		local Mode
+		local jumps = 0
+		InfiniteJump = vape.Categories.Blatant:CreateModule({
+			Name = "Infinite Jump",
+			Tooltip = "Allows you to jump infinitely.",
+			Function = function(callback: boolean)
+				if callback then
+					jumps = 0
+																			
+					InfiniteJump:Clean(inputService.JumpRequest:Connect(function()
+						jumps += 1
+						if jumps > 1 and Mode.Value == "Velocity" then
+							local power = math.sqrt(2 * workspace.Gravity * entitylib.character.Humanoid.JumpHeight)
+							entitylib.character.RootPart.Velocity = Vector3.new(entitylib.character.RootPart.Velocity.X, power, entitylib.character.RootPart.Velocity.Z)
+						elseif Mode.Value == "Jump" then
+							entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+						end
+					end))
+				end
+			end,
+			ExtraText = function() return Mode.Value end
+		})
+		Mode = InfiniteJump:CreateDropdown({
+			Name = "Mode",
+			List = {"Jump", "Velocity"}
+		})
+	end)
+		
+	run(function()
+		local FPSBoost
+		FPSBoost = vape.Legit:CreateModule({
+			Name = "FPS Boost",
+			Function = function(callback: boolean)
+				if callback then
+					-- Huge thanks to Infinite Yield, Toon gave me permission to use this code!
+					local Terrain = workspace:FindFirstChildOfClass('Terrain')
+					Terrain.WaterWaveSize = 0
+					Terrain.WaterWaveSpeed = 0
+					Terrain.WaterReflectance = 0
+					Terrain.WaterTransparency = 0
+					lightingService.GlobalShadows = false
+					lightingService.FogEnd = 9e9
+					settings().Rendering.QualityLevel = 1
+					for i,v in pairs(game:GetDescendants()) do
+						runService.Heartbeat:Wait()
+						if v:IsA('Part') or v:IsA('UnionOperation') or v:IsA('MeshPart') or v:IsA('CornerWedgePart') or v:IsA('TrussPart') then
+							v.Material = 'Plastic'
+							v.Reflectance = 0
+						elseif v:IsA('Decal') then
+							v.Transparency = 1
+						elseif v:IsA('ParticleEmitter') or v:IsA('Trail') then
+							v.Lifetime = NumberRange.new(0)
+						elseif v:IsA('Explosion') then
+							v.BlastPressure = 1
+							v.BlastRadius = 1
+						end
+					end
+					for i,v in pairs(lightingService:GetDescendants()) do
+						if v:IsA('BlurEffect') or v:IsA('SunRaysEffect') or v:IsA('ColorCorrectionEffect') or v:IsA('BloomEffect') or v:IsA('DepthOfFieldEffect') then
+							v.Enabled = false
+						end
+					end
+					FPSBoost:Clean(workspace.DescendantAdded:Connect(function(child)
+						task.spawn(function()
+							if child:IsA('Part') or child:IsA('UnionOperation') or child:IsA('MeshPart') or child:IsA('CornerWedgePart') or child:IsA('TrussPart') then
+								runService.Heartbeat:Wait()
+								child.Material = 'Plastic'
+								child.Reflectance = 0
+							elseif child:IsA('Decal') then
+								runService.Heartbeat:Wait()
+								child.Transparency = 1
+							elseif child:IsA('ParticleEmitter') or child:IsA('Trail') then
+								runService.Heartbeat:Wait()
+								child.Lifetime = NumberRange.new(0)
+							elseif child:IsA('Explosion') then
+								runService.Heartbeat:Wait()
+								child.BlastPressure = 1
+								child.BlastRadius = 1
+							elseif child:IsA('ForceField') then
+								runService.Heartbeat:Wait()
+								child:Destroy()
+							elseif child:IsA('Sparkles') then
+								runService.Heartbeat:Wait()
+								child:Destroy()
+							elseif child:IsA('Smoke') or child:IsA('Fire') then
+								runService.Heartbeat:Wait()
+								child:Destroy()
+							end
+						end)
+					end))
+				end
+			end
+		})
+	end)
+
+	run(function()
+		local nofall = nil
+		local nofallinstant = nil
+		local nofallmode = nil
+		local nofallgravmode = nil
+
+		local nofalltick = tick()
+		local canceltick = tick()
+
+		local params = RaycastParams.new()
+
+		local should = false
+
+		nofall = vape.Categories.Blatant:CreateModule({
+			Name = 'No Fall',
+			Function = function(call)
+				if call then
+					nofall:Clean(runService.PreSimulation:Connect(function()
+						if entitylib.isAlive then
+							if tick() > nofalltick and nofallmode.Value == 'State' and entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air then
+								return entitylib.character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed)
+							end
+							params.FilterDescendantsInstances = {lplr.Character}
+							if nofallmode.Value ~= 'State' and entitylib.character.Humanoid.FloorMaterial == Enum.Material.Air and workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -44, 0), params) and (canceltick > tick() or entitylib.character.RootPart.Velocity.Y < (nofallmode.Value == 'Freeze' and -50 or -25.5)) then
+								if tick() > nofalltick then
+									if nofallmode.Value == 'Freeze' then
+										nofalltick = tick() + 1
+										for __ = 1, 7 do
+											task.wait(.05)
+											entitylib.character.RootPart.Velocity = Vector3.new(entitylib.character.RootPart.Velocity.X, __, entitylib.character.RootPart.Velocity.Z)
+										end
+										if nofallinstant.Enabled then
+											local ray = workspace:Raycast(entitylib.character.RootPart.Position, Vector3.new(0, -1000, 0), params)
+											if ray then
+												entitylib.character.RootPart.CFrame = CFrame.lookAlong(Vector3.new(entitylib.character.RootPart.Position.X, ray.Position.Y + entitylib.character.HipHeight, entitylib.character.RootPart.Position.Z), entitylib.character.RootPart.CFrame.LookVector)
+											end
+											return
+										end
+									else
+										if nofallgravmode.Value == 'Workspace' then
+											workspace.Gravity = 140
+										else
+											entitylib.character.RootPart.Velocity += Vector3.new(0, (-entitylib.character.RootPart.Velocity.Y * 0.02), 0)
+										end
+									end
+								end
+							end
+						end
+					end))
+				else
+					workspace.Gravity = 196
+				end
+			end
+		})
+		nofallinstant = nofall:CreateToggle({
+			Name = 'Instant TP',
+			Tooltip = 'Automatically tps you to the ground after unfreezed',
+			Default = true
+		})
+		nofallmode = nofall:CreateDropdown({
+			Name = 'Mode',
+			List = {'Gravity', 'Freeze', 'State'},
+			Default = 'Gravity',
+			Function = function(val)
+				if nofallgravmode then
+					nofallgravmode.Object.Visible = val == 'Gravity'
+				end
+			end
+		})
+		nofallgravmode = nofall:CreateDropdown({
+			Name = 'Gravity Mode',
+			List = {'Velocity', 'Workspace'},
+			Default = 'Workspace'
+		})end)
+	end)
