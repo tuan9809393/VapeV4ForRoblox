@@ -612,7 +612,7 @@ run(function()
 				local oldent
 				repeat
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = screencenter
 					end
 					if AutoFire.Enabled then
 						local ent = entitylib['Entity'..Mode.Value]({
