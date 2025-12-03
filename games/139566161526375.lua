@@ -112,7 +112,7 @@ run(function()
 			if callback then
 				repeat
 					local tool = getTool()
-					if tool and inputService:IsMouseButtonPressed(0) then
+					if tool then
 						tool:Activate()
 					end
 					task.wait(1 / CPS.GetRandomValue())
