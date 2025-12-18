@@ -7921,115 +7921,98 @@ run(function()
 	})
 	
 end)
-	
-run(function()
-    local CapeModule
-    local CapeColor
-    local CapeMaterial
-    local CapeLength
-    local CapeWave -- New Toggle
-    local capeParts = {}
-    local waveStep = 0
 
-    -- Function to clean up the old cape
+run(function()
+    -- Safely find the Legit Category
+    local LegitTab = vape.Categories.Legit 
+    if not LegitTab then 
+        LegitTab = vape.Categories.Utility -- Fallback if Legit doesn't exist
+    end
+
+    local AnimationPlayer
+    local IDBox
+    local CapeModule
+    local animobject
+
+    -----------------------------------
+    -- 1. FIXED ANIMATION PLAYER (With Spoof)
+    -----------------------------------
+    AnimationPlayer = LegitTab:CreateModule({
+        Name = "AnimationPlayer",
+        Function = function(callback)
+            if callback then
+                animobject = Instance.new("Animation")
+                local id = IDBox.Value:match("%d+")
+                animobject.AnimationId = "rbxassetid://"..(id or "0")
+
+                -- This Hook bypasses the "Sanitized ID" error in your screenshots
+                local oldNamecall
+                oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                    local method = getnamecallmethod()
+                    if not checkcaller() and method == "LoadAnimation" then
+                        local args = {...}
+                        if args[1] and args[1]:IsA("Animation") then
+                            args[1].AnimationId = animobject.AnimationId
+                            return oldNamecall(self, unpack(args))
+                        end
+                    end
+                    return oldNamecall(self, ...)
+                end)
+                AnimationPlayer:Clean(function() hookmetamethod(game, "__namecall", oldNamecall) end)
+            end
+        end,
+        Tooltip = "Bypasses the Sanitized ID error by spoofing emotes."
+    })
+
+    IDBox = AnimationPlayer:CreateTextBox({
+        Name = "Anim ID",
+        Placeholder = "Paste numbers here",
+        Function = function() end
+    })
+
+    -----------------------------------
+    -- 2. PHYSICAL CAPE (Legit Tab)
+    -----------------------------------
+    local capeParts = {}
     local function removeCape()
-        for _, part in pairs(capeParts) do
-            if part then part:Destroy() end
-        end
+        for _, v in pairs(capeParts) do if v then v:Destroy() end end
         capeParts = {}
     end
 
-    -- Function to create the physical cape
-    local function createCape(char)
-        removeCape()
-        local root = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-        if not root then return end
-
-        local lastPart = root
-        local length = CapeLength.Value or 5
-        
-        for i = 1, length do
-            local part = Instance.new("Part")
-            part.Name = "CapeSegment_"..i
-            part.Size = Vector3.new(1.8, 0.4, 0.1)
-            part.Color = CapeColor.Value
-            part.Material = Enum.Material[CapeMaterial.Value]
-            part.CanCollide = false
-            part.Massless = true
-            part.Parent = char
-
-            local attachment0 = Instance.new("Attachment", lastPart)
-            attachment0.Position = (lastPart == root) and Vector3.new(0, 0.5, 0.5) or Vector3.new(0, -0.2, 0)
-            
-            local attachment1 = Instance.new("Attachment", part)
-            attachment1.Position = Vector3.new(0, 0.2, 0)
-
-            local constraint = Instance.new("BallSocketConstraint")
-            constraint.Attachment0 = attachment0
-            constraint.Attachment1 = attachment1
-            constraint.Parent = part
-
-            local noCol = Instance.new("NoCollisionConstraint")
-            noCol.Part0 = lastPart
-            noCol.Part1 = part
-            noCol.Parent = part
-
-            table.insert(capeParts, part)
-            lastPart = part
-        end
-    end
-
-    -- Cape Module placed in LEGIT category
-    CapeModule = vape.Categories.Legit:CreateModule({
+    CapeModule = LegitTab:CreateModule({
         Name = "Cape",
         Function = function(callback)
             if callback then
-                if entitylib.isAlive then
-                    createCape(entitylib.character)
-                end
-                
-                -- Wave Effect Heartbeat
-                CapeModule:Clean(game:GetService("RunService").Heartbeat:Connect(function(dt)
-                    if CapeWave.Enabled and #capeParts > 0 then
-                        waveStep = waveStep + dt * 3
-                        for i, part in ipairs(capeParts) do
-                            local force = math.sin(waveStep + (i * 0.5)) * 2
-                            part.AssemblyLinearVelocity = Vector3.new(0, 0, force)
-                        end
+                local function create()
+                    removeCape()
+                    local char = entitylib.character
+                    local root = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+                    if not root then return end
+                    
+                    local last = root
+                    for i = 1, 6 do
+                        local p = Instance.new("Part")
+                        p.Size = Vector3.new(1.8, 0.4, 0.1)
+                        p.CanCollide = false
+                        p.Parent = char
+                        
+                        local att0 = Instance.new("Attachment", last)
+                        att0.Position = (last == root) and Vector3.new(0, 0.5, 0.5) or Vector3.new(0, -0.2, 0)
+                        local att1 = Instance.new("Attachment", p)
+                        att1.Position = Vector3.new(0, 0.2, 0)
+                        
+                        local con = Instance.new("BallSocketConstraint", p)
+                        con.Attachment0, con.Attachment1 = att0, att1
+                        
+                        table.insert(capeParts, p)
+                        last = p
                     end
-                end))
-
-                CapeModule:Clean(entitylib.Events.LocalAdded:Connect(createCape))
+                end
+                create()
+                CapeModule:Clean(entitylib.Events.LocalAdded:Connect(create))
             else
                 removeCape()
             end
-        end,
-        Tooltip = "Adds a physical cloth cape to your character."
-    })
-
-    CapeColor = CapeModule:CreateColorWheel({
-        Name = "Color",
-        Function = function() if CapeModule.Enabled then createCape(entitylib.character) end end
-    })
-
-    CapeMaterial = CapeModule:CreateDropdown({
-        Name = "Material",
-        List = {"SmoothPlastic", "Neon", "Fabric"},
-        Function = function() if CapeModule.Enabled then createCape(entitylib.character) end end
-    })
-
-    CapeLength = CapeModule:CreateSlider({
-        Name = "Length",
-        Min = 1,
-        Max = 10,
-        Default = 6,
-        Function = function() if CapeModule.Enabled then createCape(entitylib.character) end end
-    })
-
-    CapeWave = CapeModule:CreateToggle({
-        Name = "Wave Effect",
-        Default = true,
-        Function = function() end,
-        Tooltip = "Makes the cape move like there is wind."
+        end
     })
 end)
