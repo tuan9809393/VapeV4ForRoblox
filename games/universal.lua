@@ -8030,79 +8030,97 @@ end)
 
 run(function()
     local Backtrack = {Enabled = false}
-    local BacktrackDistance = {Value = 10}
-    local BacktrackColor = {Value = Color3.fromRGB(255, 0, 0)}
-    local clonedCharacters = {}
-    local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+    local Distance = {Value = 10}
+    local MaxRange = {Value = 50}
+    local GhostColor = {Value = Color3.fromRGB(255, 0, 0)}
+    
+    local player = game:GetService("Players").LocalPlayer
+    local mouse = player:GetMouse()
+    local ghosts = {}
 
-    local function clearBacktracks()
-        for i, v in pairs(clonedCharacters) do
+    local function cleanup()
+        for i, v in pairs(ghosts) do
             v:Destroy()
         end
-        table.clear(clonedCharacters)
+        table.clear(ghosts)
     end
 
-    local function createBacktrack(plr)
-        if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
-        
+    local function createGhost(plr)
         local char = plr.Character
-        char.Archivable = true
-        local clone = Instance.new("Model")
-        clone.Name = "Backtrack_Ghost"
-        clone.Parent = workspace
+        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
         
-        -- Cloning parts and setting position 10 studs behind lookVector
         local root = char.HumanoidRootPart
-        for _, v in pairs(char:GetChildren()) do
-            if v:IsA("BasePart") then
-                local p = v:Clone()
-                p.Parent = clone
+        local offsetPos = root.CFrame * CFrame.new(0, 0, Distance.Value)
+
+        local ghost = Instance.new("Model")
+        ghost.Name = "BT_Ghost"
+        
+        -- Optimization: Only clone essential parts to prevent lag/flinging
+        for _, part in pairs(char:GetChildren()) do
+            if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                local p = part:Clone()
+                p.Parent = ghost
+                p.Anchored = true -- Prevents flinging
                 p.CanCollide = false
-                p.Anchored = true
-                p.Transparency = 0.5
-                p.Color = BacktrackColor.Value
-                -- Offset logic: Move 10 studs away from Root lookVector
-                p.CFrame = v.CFrame * CFrame.new(0, 0, BacktrackDistance.Value)
+                p.CanQuery = true -- Allows mouse detection
+                p.Transparency = 0.6
+                p.Color = GhostColor.Value
+                p.CFrame = part.CFrame * CFrame.new(0, 0, Distance.Value)
+                
+                -- Remove physics objects that cause flinging
+                for _, obj in pairs(p:GetChildren()) do
+                    if obj:IsA("BodyMovingStyle") or obj:IsA("Force") then
+                        obj:Destroy()
+                    end
+                end
             end
         end
         
-        table.insert(clonedCharacters, clone)
+        ghost.Parent = workspace
+        table.insert(ghosts, ghost)
     end
 
     Backtrack = vape.Categories.Combat:CreateModule({
-        Name = "Backtrack",
+        Name = "BacktrackV2",
         Function = function(callback)
             if callback then
                 task.spawn(function()
                     while Backtrack.Enabled do
-                        clearBacktracks()
-                        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-                            if v ~= game:GetService("Players").LocalPlayer and v.Character then
-                                createBacktrack(v)
+                        cleanup()
+                        if entitylib.isAlive then
+                            for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+                                if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                                    local dist = (player.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                                    -- Optimization: Only backtrack players within range
+                                    if dist <= MaxRange.Value then
+                                        createGhost(v)
+                                    end
+                                end
                             end
                         end
-                        
-                        -- Detection Logic
-                        if mouse.Target and mouse.Target.Parent.Name == "Backtrack_Ghost" then
-                            -- This is where the 'Backtrack' hit would be registered
-                            -- Usually involves a remote call to the server to damage the real player
-                        end
-                        
-                        task.wait(0.1)
+                        task.wait(0.05) -- Faster refresh for smoother backtrack
                     end
                 end)
             else
-                clearBacktracks()
+                cleanup()
             end
         end,
-        Tooltip = "Clones players 10 studs back to allow hitting past positions."
+        Tooltip = "Optimized backtrack with fling-prevention."
     })
 
-    BacktrackDistance = Backtrack:CreateSlider({
+    Distance = Backtrack:CreateSlider({
         Name = "Distance",
         Min = 1,
         Max = 20,
         Default = 10,
+        Function = function() end
+    })
+
+    MaxRange = Backtrack:CreateSlider({
+        Name = "Max Range",
+        Min = 10,
+        Max = 100,
+        Default = 50,
         Function = function() end
     })
 end)
