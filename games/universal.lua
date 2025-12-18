@@ -7936,3 +7936,48 @@ run(function()
 	
 end)
 	
+run(function()
+    local FakeLag = {Enabled = false}
+    local FakeLagDuration = {Value = 0.5}
+    local FakeLagMode = {Value = "Slight"}
+    local lastLag = tick()
+
+    FakeLag = vape.Categories.Utility:CreateModule({
+        Name = "FakeLag",
+        Function = function(callback)
+            if callback then
+                spawn(function()
+                    while FakeLag.Enabled do
+                        task.wait(FakeLagDuration.Value)
+                        if FakeLagMode.Value == "Aggressive" then
+                            settings().Network.IncomingReplicationLag = FakeLagDuration.Value
+                        else
+                            settings().Network.IncomingReplicationLag = 0
+                            task.wait(0.1)
+                            settings().Network.IncomingReplicationLag = FakeLagDuration.Value / 2
+                        end
+                    end
+                    settings().Network.IncomingReplicationLag = 0
+                end)
+            else
+                settings().Network.IncomingReplicationLag = 0
+            end
+        end,
+        Tooltip = "Delays your packets to make you harder to hit"
+    })
+
+    FakeLagDuration = FakeLag:CreateSlider({
+        Name = "Lag Amount",
+        Min = 0.1,
+        Max = 3,
+        Decimal = 10,
+        Function = function(val) end
+    })
+
+    FakeLagMode = FakeLag:CreateDropdown({
+        Name = "Mode",
+        List = {"Slight", "Aggressive"},
+        Function = function(val) end
+    })
+end)
+																																																																																																																																																																																																																					
