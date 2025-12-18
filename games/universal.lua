@@ -7936,3 +7936,94 @@ run(function()
 	
 end)
 	
+run(function()
+    local FakeLag = {Enabled = false}
+    local LagRange = {Value = 0.4, Value2 = 1.2}
+    local Visualizer = {Enabled = false}
+    
+    local camera = workspace.CurrentCamera
+    local ghost
+
+    local function clearGhost()
+        if ghost then 
+            ghost:Destroy() 
+            ghost = nil 
+        end
+    end
+
+    local function createGhost(char)
+        clearGhost()
+        char.Archivable = true
+        ghost = Instance.new("Model")
+        ghost.Name = "LagGhost"
+        
+        for _, part in pairs(char:GetChildren()) do
+            if part:IsA("BasePart") then
+                local p = part:Clone()
+                p.Parent = ghost
+                p.Anchored = true 
+                p.CanCollide = false
+                p.Transparency = 0.5
+                p.Color = Color3.fromRGB(100, 100, 255)
+                
+                -- Optimization: Remove extra clutter from parts
+                for _, child in pairs(p:GetChildren()) do
+                    if not child:IsA("SpecialMesh") then
+                        child:Destroy()
+                    end
+                end
+            end
+        end
+        ghost.Parent = camera
+    end
+
+    FakeLag = vape.Categories.Utility:CreateModule({
+        Name = "FakeLag",
+        Function = function(callback)
+            if callback then
+                task.spawn(function()
+                    while FakeLag.Enabled do
+                        -- Dynamic Logic: Calculates a random value between the two slider points
+                        local minL = math.min(LagRange.Value, LagRange.Value2)
+                        local maxL = math.max(LagRange.Value, LagRange.Value2)
+                        local currentLag = math.random(minL * 1000, maxL * 1000) / 1000
+
+                        if Visualizer.Enabled and entitylib.isAlive then
+                            createGhost(entitylib.character)
+                        end
+
+                        settings().Network.IncomingReplicationLag = currentLag
+                        task.wait(currentLag)
+                        
+                        settings().Network.IncomingReplicationLag = 0
+                        clearGhost()
+                        task.wait(0.1)
+                    end
+                end)
+            else
+                settings().Network.IncomingReplicationLag = 0
+                clearGhost()
+            end
+        end,
+        Tooltip = "Uses a random range to desync your character from the server."
+    })
+
+    -- Added the TwoSlider here
+    LagRange = FakeLag:CreateTwoSlider({
+        Name = "Lag Range",
+        Min = 0.1,
+        Max = 3,
+        DefaultMin = 0.4,
+        DefaultMax = 1.2,
+        Decimal = 10,
+        Function = function() end
+    })
+
+    Visualizer = FakeLag:CreateToggle({
+        Name = "Ghost Visualizer",
+        Default = false,
+        Function = function(val) 
+            if not val then clearGhost() end 
+        end
+    })
+end)
