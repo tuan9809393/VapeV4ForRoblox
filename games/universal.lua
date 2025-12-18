@@ -7938,7 +7938,8 @@ end)
 	
 run(function()
     local FakeLag = {Enabled = false}
-    local LagRange = {Value = 0.4, Value2 = 1.2}
+    local LagAmount = {Value = 0.5}
+    local Dynamic = {Enabled = false}
     local Visualizer = {Enabled = false}
     
     local camera = workspace.CurrentCamera
@@ -7961,19 +7962,13 @@ run(function()
             if part:IsA("BasePart") then
                 local p = part:Clone()
                 p.Parent = ghost
-                p.Anchored = true 
+                p.Anchored = true -- Prevents 'fling' issues
                 p.CanCollide = false
                 p.Transparency = 0.5
                 p.Color = Color3.fromRGB(100, 100, 255)
-                
-                -- Optimization: Remove extra clutter from parts
-                for _, child in pairs(p:GetChildren()) do
-                    if not child:IsA("SpecialMesh") then
-                        child:Destroy()
-                    end
-                end
             end
         end
+        -- Parent to Camera so the server doesn't 'sanitize' it
         ghost.Parent = camera
     end
 
@@ -7983,18 +7978,20 @@ run(function()
             if callback then
                 task.spawn(function()
                     while FakeLag.Enabled do
-                        -- Dynamic Logic: Calculates a random value between the two slider points
-                        local minL = math.min(LagRange.Value, LagRange.Value2)
-                        local maxL = math.max(LagRange.Value, LagRange.Value2)
-                        local currentLag = math.random(minL * 1000, maxL * 1000) / 1000
+                        local currentLag = LagAmount.Value
+                        if Dynamic.Enabled then
+                            currentLag = math.random(10, LagAmount.Value * 1000) / 1000
+                        end
 
                         if Visualizer.Enabled and entitylib.isAlive then
                             createGhost(entitylib.character)
                         end
 
+                        -- Simulate latency
                         settings().Network.IncomingReplicationLag = currentLag
                         task.wait(currentLag)
                         
+                        -- Reset and clear to sync
                         settings().Network.IncomingReplicationLag = 0
                         clearGhost()
                         task.wait(0.1)
@@ -8005,25 +8002,25 @@ run(function()
                 clearGhost()
             end
         end,
-        Tooltip = "Uses a random range to desync your character from the server."
+        Tooltip = "Uses Network Lag to desync your character from the server."
     })
 
-    -- Added the TwoSlider here
-    LagRange = FakeLag:CreateTwoSlider({
-        Name = "Lag Range",
+    LagAmount = FakeLag:CreateSlider({
+        Name = "Max Lag",
         Min = 0.1,
         Max = 3,
-        DefaultMin = 0.4,
-        DefaultMax = 1.2,
         Decimal = 10,
+        Function = function() end
+    })
+
+    Dynamic = FakeLag:CreateToggle({
+        Name = "Dynamic Mode",
+        Default = true,
         Function = function() end
     })
 
     Visualizer = FakeLag:CreateToggle({
         Name = "Ghost Visualizer",
-        Default = false,
-        Function = function(val) 
-            if not val then clearGhost() end 
-        end
+        Function = function(val) if not val then clearGhost() end end
     })
 end)
