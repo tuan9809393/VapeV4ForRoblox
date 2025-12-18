@@ -7921,4 +7921,135 @@ run(function()
 	})
 	
 end)
-	
+
+run(function()
+    local LegitTab = vape.Categories.Legit or vape.Categories.Utility
+    local AnimationPack
+    local currentTrack = nil
+    
+    -- Full state list for a complete animation overhaul
+    local AnimIDs = {
+        Idle = "",
+        Walk = "",
+        Run = "",
+        Jump = "",
+        Fall = "",
+        Swim = "",
+        SwimIdle = "",
+        Climb = "",
+        Mood = "" -- Can be used for "Pose" animations
+    }
+
+    local function stopCurrent()
+        if currentTrack then
+            currentTrack:Stop()
+            currentTrack = nil
+        end
+    end
+
+    local function playAnim(char, id)
+        if id == "" or id == " " then return end
+        
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        if not hum or not hum.Animator then return end
+
+        local animObj = Instance.new("Animation")
+        animObj.AnimationId = "rbxassetid://"..id:match("%d+")
+        
+        -- Load and play
+        local success, res = pcall(function()
+            local track = hum.Animator:LoadAnimation(animObj)
+            track.Priority = Enum.AnimationPriority.Action4
+            track:Play()
+            return track
+        end)
+
+        if success then
+            stopCurrent()
+            currentTrack = res
+        end
+    end
+
+    AnimationPack = LegitTab:CreateModule({
+        Name = "AnimationPack",
+        Function = function(callback)
+            if not callback then
+                stopCurrent()
+            end
+        end,
+        Tooltip = "Complete movement overhaul. Enter IDs for every state."
+    })
+
+    -- Generate IDBoxes for all keys in AnimIDs
+    for name, _ in pairs(AnimIDs) do
+        AnimationPack:CreateTextBox({
+            Name = name.." ID",
+            Placeholder = name.." ID...",
+            Function = function(val)
+                AnimIDs[name] = val
+                -- Refresh if active
+                if AnimationPack.Enabled and entitylib.isAlive then
+                    AnimationPack:Toggle()
+                    AnimationPack:Toggle()
+                end
+            end
+        })
+    end
+
+    -- State Controller
+    local function setupListener(char)
+        local hum = char:WaitForChild("Humanoid")
+        
+        -- Handle State Transitions
+        hum.StateChanged:Connect(function(_, newState)
+            if not AnimationPack.Enabled then return end
+            
+            if newState == Enum.HumanoidStateType.Jumping then
+                playAnim(char, AnimIDs.Jump)
+            elseif newState == Enum.HumanoidStateType.Freefall then
+                playAnim(char, AnimIDs.Fall)
+            elseif newState == Enum.HumanoidStateType.Climbing then
+                playAnim(char, AnimIDs.Climb)
+            elseif newState == Enum.HumanoidStateType.Swimming then
+                -- Check if moving or still in water
+                if hum.MoveDirection.Magnitude > 0 then
+                    playAnim(char, AnimIDs.Swim)
+                else
+                    playAnim(char, AnimIDs.SwimIdle)
+                end
+            end
+        end)
+
+        -- Handle Walking/Running/Idle (Continuous check for speed changes)
+        task.spawn(function()
+            while task.wait(0.1) do
+                if not AnimationPack.Enabled or not hum or hum.Health <= 0 then break end
+                
+                local state = hum:GetState()
+                if state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics then
+                    if hum.MoveDirection.Magnitude > 0 then
+                        if hum.WalkSpeed > 16 then
+                            -- Only switch if not already playing Run
+                            if not currentTrack or currentTrack.Animation.AnimationId ~= "rbxassetid://"..AnimIDs.Run:match("%d+") then
+                                playAnim(char, AnimIDs.Run)
+                            end
+                        else
+                            -- Only switch if not already playing Walk
+                            if not currentTrack or currentTrack.Animation.AnimationId ~= "rbxassetid://"..AnimIDs.Walk:match("%d+") then
+                                playAnim(char, AnimIDs.Walk)
+                            end
+                        end
+                    else
+                        -- Only switch if not already playing Idle
+                        if not currentTrack or currentTrack.Animation.AnimationId ~= "rbxassetid://"..AnimIDs.Idle:match("%d+") then
+                            playAnim(char, AnimIDs.Idle)
+                        end
+                    end
+                end
+            end
+        end)
+    end
+
+    if entitylib.isAlive then setupListener(entitylib.character) end
+    AnimationPack:Clean(entitylib.Events.LocalAdded:Connect(setupListener))
+end)
