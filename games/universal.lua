@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/tuan9809393/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -8028,82 +8028,3 @@ run(function()
     })
 end)
 
-run(function()
-    local Backtrack = {Enabled = false}
-    local Distance = {Value = 10}
-    local MaxRange = {Value = 50}
-    local GhostColor = {Value = Color3.fromRGB(255, 0, 0)}
-    
-    local player = game:GetService("Players").LocalPlayer
-    local camera = workspace.CurrentCamera
-    local ghosts = {}
-
-    local function cleanup()
-        for i, v in pairs(ghosts) do
-            if v then v:Destroy() end
-        end
-        table.clear(ghosts)
-    end
-
-    local function createGhost(plr)
-        local char = plr.Character
-        if not char or not char:FindFirstChild("HumanoidRootPart") then return end
-        
-        local ghost = Instance.new("Model")
-        ghost.Name = "BT_Ghost"
-        
-        for _, part in pairs(char:GetChildren()) do
-            if part:IsA("BasePart") then
-                local p = part:Clone()
-                p.Parent = ghost
-                p.Anchored = true -- Fixes the 'fling' bug
-                p.CanCollide = false
-                p.CanQuery = true 
-                p.Transparency = 0.6
-                p.Color = GhostColor.Value
-                -- Position 10 studs away from the player's back
-                p.CFrame = part.CFrame * CFrame.new(0, 0, Distance.Value)
-                
-                -- Optimization: Remove all scripts/physics inside the clone
-                for _, child in pairs(p:GetChildren()) do
-                    if not child:IsA("SpecialMesh") then
-                        child:Destroy()
-                    end
-                end
-            end
-        end
-        
-        -- Parent to Camera to bypass server sanitization
-        ghost.Parent = camera 
-        table.insert(ghosts, ghost)
-    end
-
-    Backtrack = vape.Categories.Combat:CreateModule({
-        Name = "BacktrackV2",
-        Function = function(callback)
-            if callback then
-                task.spawn(function()
-                    while Backtrack.Enabled do
-                        cleanup()
-                        if entitylib.isAlive then
-                            for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-                                if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                                    local dist = (player.Character.HumanoidRootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
-                                    if dist <= MaxRange.Value then
-                                        createGhost(v)
-                                    end
-                                end
-                            end
-                        end
-                        task.wait(0.03) -- Faster refresh for more accurate tracking
-                    end
-                end)
-            else
-                cleanup()
-            end
-        end,
-        Tooltip = "Fixed backtrack: No flinging and bypasses sanitization."
-    })
-
-    -- [UI Components for Distance and Max Range remain the same]
-end)
