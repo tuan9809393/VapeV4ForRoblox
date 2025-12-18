@@ -7938,34 +7938,38 @@ end)
 	
 run(function()
     local FakeLag = {Enabled = false}
-    local FakeLagDuration = {Value = 0.5}
-    local FakeLagMode = {Value = "Slight"}
+    local LagAmount = {Value = 0.5}
     local Dynamic = {Enabled = false}
     local Visualizer = {Enabled = false}
     
-    local ghostChar
-    
+    local camera = workspace.CurrentCamera
+    local ghost
+
     local function clearGhost()
-        if ghostChar then
-            ghostChar:Destroy()
-            ghostChar = nil
+        if ghost then 
+            ghost:Destroy() 
+            ghost = nil 
         end
     end
 
     local function createGhost(char)
         clearGhost()
         char.Archivable = true
-        ghostChar = char:Clone()
-        ghostChar.Parent = workspace
-        for _, v in pairs(ghostChar:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.Transparency = 0.5
-                v.CanCollide = false
-                v.Color = Color3.fromRGB(150, 150, 255)
-            elseif v:IsA("LocalScript") or v:IsA("Script") then
-                v:Destroy()
+        ghost = Instance.new("Model")
+        ghost.Name = "LagGhost"
+        
+        for _, part in pairs(char:GetChildren()) do
+            if part:IsA("BasePart") then
+                local p = part:Clone()
+                p.Parent = ghost
+                p.Anchored = true -- Prevents 'fling' issues
+                p.CanCollide = false
+                p.Transparency = 0.5
+                p.Color = Color3.fromRGB(100, 100, 255)
             end
         end
+        -- Parent to Camera so the server doesn't 'sanitize' it
+        ghost.Parent = camera
     end
 
     FakeLag = vape.Categories.Utility:CreateModule({
@@ -7974,19 +7978,20 @@ run(function()
             if callback then
                 task.spawn(function()
                     while FakeLag.Enabled do
-                        local lagAmount = FakeLagDuration.Value
-                        
+                        local currentLag = LagAmount.Value
                         if Dynamic.Enabled then
-                            lagAmount = math.random(10, FakeLagDuration.Value * 100) / 100
+                            currentLag = math.random(10, LagAmount.Value * 1000) / 1000
                         end
 
                         if Visualizer.Enabled and entitylib.isAlive then
                             createGhost(entitylib.character)
                         end
 
-                        settings().Network.IncomingReplicationLag = lagAmount
-                        task.wait(lagAmount)
+                        -- Simulate latency
+                        settings().Network.IncomingReplicationLag = currentLag
+                        task.wait(currentLag)
                         
+                        -- Reset and clear to sync
                         settings().Network.IncomingReplicationLag = 0
                         clearGhost()
                         task.wait(0.1)
@@ -7997,34 +8002,25 @@ run(function()
                 clearGhost()
             end
         end,
-        Tooltip = "Delays your packets. Dynamic mode randomizes lag to bypass checks."
+        Tooltip = "Uses Network Lag to desync your character from the server."
     })
 
-    FakeLagDuration = FakeLag:CreateSlider({
+    LagAmount = FakeLag:CreateSlider({
         Name = "Max Lag",
         Min = 0.1,
         Max = 3,
         Decimal = 10,
-        Function = function(val) end
+        Function = function() end
     })
 
     Dynamic = FakeLag:CreateToggle({
-        Name = "Dynamic",
-        Function = function() end,
-        Default = true
+        Name = "Dynamic Mode",
+        Default = true,
+        Function = function() end
     })
 
     Visualizer = FakeLag:CreateToggle({
-        Name = "Visualizer (Ghost)",
-        Function = function(callback)
-            if not callback then clearGhost() end
-        end
-    })
-
-    FakeLagMode = FakeLag:CreateDropdown({
-        Name = "Mode",
-        List = {"Slight", "Aggressive"},
-        Function = function(val) end
+        Name = "Ghost Visualizer",
+        Function = function(val) if not val then clearGhost() end end
     })
 end)
-
