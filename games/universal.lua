@@ -7922,3 +7922,114 @@ run(function()
 	
 end)
 	
+run(function()
+    local CapeModule
+    local CapeColor
+    local CapeMaterial
+    local CapeLength
+    local CapeWave -- New Toggle
+    local capeParts = {}
+    local waveStep = 0
+
+    -- Function to clean up the old cape
+    local function removeCape()
+        for _, part in pairs(capeParts) do
+            if part then part:Destroy() end
+        end
+        capeParts = {}
+    end
+
+    -- Function to create the physical cape
+    local function createCape(char)
+        removeCape()
+        local root = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
+        if not root then return end
+
+        local lastPart = root
+        local length = CapeLength.Value or 5
+        
+        for i = 1, length do
+            local part = Instance.new("Part")
+            part.Name = "CapeSegment_"..i
+            part.Size = Vector3.new(1.8, 0.4, 0.1)
+            part.Color = CapeColor.Value
+            part.Material = Enum.Material[CapeMaterial.Value]
+            part.CanCollide = false
+            part.Massless = true
+            part.Parent = char
+
+            local attachment0 = Instance.new("Attachment", lastPart)
+            attachment0.Position = (lastPart == root) and Vector3.new(0, 0.5, 0.5) or Vector3.new(0, -0.2, 0)
+            
+            local attachment1 = Instance.new("Attachment", part)
+            attachment1.Position = Vector3.new(0, 0.2, 0)
+
+            local constraint = Instance.new("BallSocketConstraint")
+            constraint.Attachment0 = attachment0
+            constraint.Attachment1 = attachment1
+            constraint.Parent = part
+
+            local noCol = Instance.new("NoCollisionConstraint")
+            noCol.Part0 = lastPart
+            noCol.Part1 = part
+            noCol.Parent = part
+
+            table.insert(capeParts, part)
+            lastPart = part
+        end
+    end
+
+    -- Cape Module placed in LEGIT category
+    CapeModule = vape.Categories.Legit:CreateModule({
+        Name = "Cape",
+        Function = function(callback)
+            if callback then
+                if entitylib.isAlive then
+                    createCape(entitylib.character)
+                end
+                
+                -- Wave Effect Heartbeat
+                CapeModule:Clean(game:GetService("RunService").Heartbeat:Connect(function(dt)
+                    if CapeWave.Enabled and #capeParts > 0 then
+                        waveStep = waveStep + dt * 3
+                        for i, part in ipairs(capeParts) do
+                            local force = math.sin(waveStep + (i * 0.5)) * 2
+                            part.AssemblyLinearVelocity = Vector3.new(0, 0, force)
+                        end
+                    end
+                end))
+
+                CapeModule:Clean(entitylib.Events.LocalAdded:Connect(createCape))
+            else
+                removeCape()
+            end
+        end,
+        Tooltip = "Adds a physical cloth cape to your character."
+    })
+
+    CapeColor = CapeModule:CreateColorWheel({
+        Name = "Color",
+        Function = function() if CapeModule.Enabled then createCape(entitylib.character) end end
+    })
+
+    CapeMaterial = CapeModule:CreateDropdown({
+        Name = "Material",
+        List = {"SmoothPlastic", "Neon", "Fabric"},
+        Function = function() if CapeModule.Enabled then createCape(entitylib.character) end end
+    })
+
+    CapeLength = CapeModule:CreateSlider({
+        Name = "Length",
+        Min = 1,
+        Max = 10,
+        Default = 6,
+        Function = function() if CapeModule.Enabled then createCape(entitylib.character) end end
+    })
+
+    CapeWave = CapeModule:CreateToggle({
+        Name = "Wave Effect",
+        Default = true,
+        Function = function() end,
+        Tooltip = "Makes the cape move like there is wind."
+    })
+end)
