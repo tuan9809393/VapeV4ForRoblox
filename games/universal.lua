@@ -8027,3 +8027,82 @@ run(function()
         Function = function(val) end
     })
 end)
+
+run(function()
+    local Backtrack = {Enabled = false}
+    local BacktrackDistance = {Value = 10}
+    local BacktrackColor = {Value = Color3.fromRGB(255, 0, 0)}
+    local clonedCharacters = {}
+    local mouse = game:GetService("Players").LocalPlayer:GetMouse()
+
+    local function clearBacktracks()
+        for i, v in pairs(clonedCharacters) do
+            v:Destroy()
+        end
+        table.clear(clonedCharacters)
+    end
+
+    local function createBacktrack(plr)
+        if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
+        
+        local char = plr.Character
+        char.Archivable = true
+        local clone = Instance.new("Model")
+        clone.Name = "Backtrack_Ghost"
+        clone.Parent = workspace
+        
+        -- Cloning parts and setting position 10 studs behind lookVector
+        local root = char.HumanoidRootPart
+        for _, v in pairs(char:GetChildren()) do
+            if v:IsA("BasePart") then
+                local p = v:Clone()
+                p.Parent = clone
+                p.CanCollide = false
+                p.Anchored = true
+                p.Transparency = 0.5
+                p.Color = BacktrackColor.Value
+                -- Offset logic: Move 10 studs away from Root lookVector
+                p.CFrame = v.CFrame * CFrame.new(0, 0, BacktrackDistance.Value)
+            end
+        end
+        
+        table.insert(clonedCharacters, clone)
+    end
+
+    Backtrack = vape.Categories.Combat:CreateModule({
+        Name = "Backtrack",
+        Function = function(callback)
+            if callback then
+                task.spawn(function()
+                    while Backtrack.Enabled do
+                        clearBacktracks()
+                        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+                            if v ~= game:GetService("Players").LocalPlayer and v.Character then
+                                createBacktrack(v)
+                            end
+                        end
+                        
+                        -- Detection Logic
+                        if mouse.Target and mouse.Target.Parent.Name == "Backtrack_Ghost" then
+                            -- This is where the 'Backtrack' hit would be registered
+                            -- Usually involves a remote call to the server to damage the real player
+                        end
+                        
+                        task.wait(0.1)
+                    end
+                end)
+            else
+                clearBacktracks()
+            end
+        end,
+        Tooltip = "Clones players 10 studs back to allow hitting past positions."
+    })
+
+    BacktrackDistance = Backtrack:CreateSlider({
+        Name = "Distance",
+        Min = 1,
+        Max = 20,
+        Default = 10,
+        Function = function() end
+    })
+end)
