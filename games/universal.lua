@@ -7938,7 +7938,8 @@ end)
 	
 run(function()
     local FakeLag = {Enabled = false}
-    local LagRange = {Value = 0.5, Value2 = 1.0}
+    local LagAmount = {Value = 0.5}
+    local Dynamic = {Enabled = false}
     local Visualizer = {Enabled = false}
     
     local camera = workspace.CurrentCamera
@@ -7961,14 +7962,14 @@ run(function()
             if part:IsA("BasePart") then
                 local p = part:Clone()
                 p.Parent = ghost
-                p.Anchored = true 
+                p.Anchored = true -- Prevents 'fling' issues
                 p.CanCollide = false
                 p.Transparency = 0.5
                 p.Color = Color3.fromRGB(100, 100, 255)
             end
         end
-        -- Parent to Camera stops server-side 'Sanitized ID' errors
-        ghost.Parent = camera 
+        -- Parent to Camera so the server doesn't 'sanitize' it
+        ghost.Parent = camera
     end
 
     FakeLag = vape.Categories.Utility:CreateModule({
@@ -7977,18 +7978,20 @@ run(function()
             if callback then
                 task.spawn(function()
                     while FakeLag.Enabled do
-                        -- Dynamic Logic: Randomize between slider 1 and slider 2
-                        local minV = math.min(LagRange.Value, LagRange.Value2)
-                        local maxV = math.max(LagRange.Value, LagRange.Value2)
-                        local currentLag = math.random(minV * 1000, maxV * 1000) / 1000
+                        local currentLag = LagAmount.Value
+                        if Dynamic.Enabled then
+                            currentLag = math.random(10, LagAmount.Value * 1000) / 1000
+                        end
 
                         if Visualizer.Enabled and entitylib.isAlive then
                             createGhost(entitylib.character)
                         end
 
+                        -- Simulate latency
                         settings().Network.IncomingReplicationLag = currentLag
                         task.wait(currentLag)
                         
+                        -- Reset and clear to sync
                         settings().Network.IncomingReplicationLag = 0
                         clearGhost()
                         task.wait(0.1)
@@ -7999,25 +8002,25 @@ run(function()
                 clearGhost()
             end
         end,
-        Tooltip = "Randomizes lag between two values to desync from server."
+        Tooltip = "Uses Network Lag to desync your character from the server."
     })
 
-    -- Ensure this is named correctly to be picked up by the Vape UI
-    LagRange = FakeLag:CreateTwoSlider({
-        Name = "Lag Range",
-        Min = 0,
+    LagAmount = FakeLag:CreateSlider({
+        Name = "Max Lag",
+        Min = 0.1,
         Max = 3,
-        DefaultMin = 0.4,
-        DefaultMax = 1.2,
         Decimal = 10,
+        Function = function() end
+    })
+
+    Dynamic = FakeLag:CreateToggle({
+        Name = "Dynamic Mode",
+        Default = true,
         Function = function() end
     })
 
     Visualizer = FakeLag:CreateToggle({
         Name = "Ghost Visualizer",
-        Default = false,
-        Function = function(val) 
-            if not val then clearGhost() end 
-        end
+        Function = function(val) if not val then clearGhost() end end
     })
 end)
