@@ -7938,7 +7938,7 @@ end)
 	
 run(function()
     local FakeLag = {Enabled = false}
-    local LagRange = {Value = 0.5, Value2 = 1.2} -- Default Min/Max
+    local LagRange = {Value = 0.5, Value2 = 1.2}
     local Visualizer = {Enabled = false}
     
     local camera = workspace.CurrentCamera
@@ -7961,13 +7961,13 @@ run(function()
             if part:IsA("BasePart") then
                 local p = part:Clone()
                 p.Parent = ghost
-                p.Anchored = true -- Prevents the 'fling' bug
+                p.Anchored = true 
                 p.CanCollide = false
                 p.Transparency = 0.5
                 p.Color = Color3.fromRGB(100, 100, 255)
             end
         end
-        ghost.Parent = camera -- Bypasses server 'sanitization'
+        ghost.Parent = camera 
     end
 
     FakeLag = vape.Categories.Utility:CreateModule({
@@ -7976,10 +7976,10 @@ run(function()
             if callback then
                 task.spawn(function()
                     while FakeLag.Enabled do
-                        -- Dynamic Logic: Randomize between Min and Max slider values
-                        local minLag = math.min(LagRange.Value, LagRange.Value2)
-                        local maxLag = math.max(LagRange.Value, LagRange.Value2)
-                        local currentLag = math.random(minLag * 1000, maxLag * 1000) / 1000
+                        -- Dynamic Logic: Randomize between the two slider positions
+                        local minVal = math.min(LagRange.Value, LagRange.Value2)
+                        local maxVal = math.max(LagRange.Value, LagRange.Value2)
+                        local currentLag = math.random(minVal * 1000, maxVal * 1000) / 1000
 
                         if Visualizer.Enabled and entitylib.isAlive then
                             createGhost(entitylib.character)
@@ -7998,16 +7998,16 @@ run(function()
                 clearGhost()
             end
         end,
-        Tooltip = "Randomizes your lag within a set range to bypass checks."
+        Tooltip = "Uses a dual-slider range to randomize network lag."
     })
 
-    -- The TwoSlider implementation for your Lag Range
+    -- Added TwoSlider logic here
     LagRange = FakeLag:CreateTwoSlider({
         Name = "Lag Range",
         Min = 0.1,
         Max = 3,
-        DefaultMin = 0.5,
-        DefaultMax = 1.5,
+        DefaultMin = 0.4,
+        DefaultMax = 1.0,
         Decimal = 10,
         Function = function() end
     })
