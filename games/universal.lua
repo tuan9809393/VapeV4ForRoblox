@@ -7938,7 +7938,7 @@ end)
 	
 run(function()
     local FakeLag = {Enabled = false}
-    local LagRange = {Value = 0.5, Value2 = 1.2}
+    local LagRange = {Value = 0.5, Value2 = 1.0}
     local Visualizer = {Enabled = false}
     
     local camera = workspace.CurrentCamera
@@ -7967,6 +7967,7 @@ run(function()
                 p.Color = Color3.fromRGB(100, 100, 255)
             end
         end
+        -- Parent to Camera stops server-side 'Sanitized ID' errors
         ghost.Parent = camera 
     end
 
@@ -7976,10 +7977,10 @@ run(function()
             if callback then
                 task.spawn(function()
                     while FakeLag.Enabled do
-                        -- Dynamic Logic: Randomize between the two slider positions
-                        local minVal = math.min(LagRange.Value, LagRange.Value2)
-                        local maxVal = math.max(LagRange.Value, LagRange.Value2)
-                        local currentLag = math.random(minVal * 1000, maxVal * 1000) / 1000
+                        -- Dynamic Logic: Randomize between slider 1 and slider 2
+                        local minV = math.min(LagRange.Value, LagRange.Value2)
+                        local maxV = math.max(LagRange.Value, LagRange.Value2)
+                        local currentLag = math.random(minV * 1000, maxV * 1000) / 1000
 
                         if Visualizer.Enabled and entitylib.isAlive then
                             createGhost(entitylib.character)
@@ -7998,22 +7999,25 @@ run(function()
                 clearGhost()
             end
         end,
-        Tooltip = "Uses a dual-slider range to randomize network lag."
+        Tooltip = "Randomizes lag between two values to desync from server."
     })
 
-    -- Added TwoSlider logic here
+    -- Ensure this is named correctly to be picked up by the Vape UI
     LagRange = FakeLag:CreateTwoSlider({
         Name = "Lag Range",
-        Min = 0.1,
+        Min = 0,
         Max = 3,
         DefaultMin = 0.4,
-        DefaultMax = 1.0,
+        DefaultMax = 1.2,
         Decimal = 10,
         Function = function() end
     })
 
     Visualizer = FakeLag:CreateToggle({
         Name = "Ghost Visualizer",
-        Function = function(val) if not val then clearGhost() end end
+        Default = false,
+        Function = function(val) 
+            if not val then clearGhost() end 
+        end
     })
 end)
