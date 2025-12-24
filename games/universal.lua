@@ -7921,61 +7921,79 @@ run(function()
 	})
 	
 end)
-
+																																																																																																																																																																																																																				
 run(function()
     local LegitTab = (vape and vape.Categories and vape.Categories.Legit) or (vape and vape.Categories and vape.Categories.Utility)
     if not LegitTab then return end 
 
-    local AntiAim = {Enabled = false}
-    local Mode = {Value = "Down"}
-    local JitterSpeed = {Value = 0.1}
+    local PingBoost = {Enabled = false}
     
-    local lastJitter = false
+    -- Full list of provided FFlags and networking optimizations
+    local fflagList = {
+        -- RakNet Bandwidth & Frequency
+        ["DFIntRaknetBandwidthPingSendEveryXSeconds"] = 1,
+        ["DFIntRaknetBandwidthInfluxHundredthsPercentageV2"] = 10000,
+        ["DFFlagSampleAndRefreshRakPing"] = true,
+        ["DFFlagRakNetUseSlidingWindow4"] = false,
+        ["DFFlagRakNetStaleSendQueue"] = true,
+        ["DFFlagRakNetMissingPing1"] = true,
+        ["DFFlagRakNetMissingPing"] = false,
+        ["DFFlagRakNetFixBwCollapse"] = false,
+        ["DFFlagRakNetEnablePoll"] = true,
+        ["DFFlagRakNetDisconnectNotification"] = true,
+        ["DFFlagRakNetDetectRecvThreadOverload"] = true,
+        ["DFFlagRakNetDetectNetUnreachable"] = true,
+        ["DFFlagRakNetDecoupleRecvAndUpdateLoopShutdown"] = true,
+        ["DFFlagRakNetCalculateApplicationFeedback2"] = true,
+        
+        -- RakNet Ints/Timing
+        ["FIntRakNetResendBufferArrayLength"] = 128,
+        ["FIntRakNetDatagramMessageldArrayLength"] = 4096,
+        ["DFIntRakNetUseSlidingWindow2_trackLengthMs"] = 300,
+        ["DFIntRakNetUseSlidingWindow2_startUpdateMs"] = 1,
+        ["DFIntRakNetUseSlidingWindow2_startInitSpeed"] = 100000,
+        ["DFIntRakNetUseSlidingWindow2_startFactor"] = 100,
+        ["DFIntRakNetUseSlidingWindow2_rangeCount"] = 20,
+        ["DFIntRakNetUseSlidingWindow2_minSpeed"] = 512,
+        ["DFIntRakNetUseSlidingWindow2_minRtt"] = 500,
+        ["DFIntRakNetUseSlidingWindow2_maxSpeed"] = 5000,
+        ["DFIntRakNetStaleSendQueueTriggerMs"] = 100,
+        ["DFIntRakNetResendRttMultiple"] = 2,
+        ["DFIntRakNetPingFrequencyMillisecond"] = 50,
+        ["DFIntRakNetLoopMs"] = 1,
+        ["DFIntRaknetDownloadEpisodeInMs"] = 500,
+        ["DFIntRakNetClockDriftAdjustmentPerPingMillisecond"] = 25,
+        
+        -- Additional Network Stability
+        ["DFFlagDebugRakPeerReceiveCountDistributedPackets"] = false,
+        ["FFlagNetworkExecutorParallelResumption"] = true,
+        ["FIntNetworkPredictionLatencyCompensation"] = 0
+    }
 
-    AntiAim = LegitTab:CreateModule({
-        Name = "AntiAim",
+    local function applyFlags()
+        if not setfflag then 
+            print("Vape: setfflag function not found in this executor.")
+            return 
+        end
+
+        for flag, value in pairs(fflagList) do
+            pcall(function()
+                setfflag(flag, tostring(value))
+            end)
+        end
+    end
+
+    PingBoost = LegitTab:CreateModule({
+        Name = "PingBoost",
         Function = function(callback)
             if callback then
-                local remote = game:GetService("ReplicatedStorage"):WaitForChild("ServerEvents"):WaitForChild("LookAngle")
-                
-                -- Hook the Namecall to catch the FireServer call you logged
-                local oldNamecall
-                oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-                    local method = getnamecallmethod()
-                    local args = {...}
-
-                    -- Match the remote and method from your log
-                    if not checkcaller() and self == remote and method == "FireServer" and AntiAim.Enabled then
-                        -- args[2] is the Vector3 used for LookAngle
-                        if Mode.Value == "Down" then
-                            -- Force look vector straight down
-                            args[2] = Vector3.new(0, -100, 0)
-                        elseif Mode.Value == "Up" then
-                            -- Force look vector straight up
-                            args[2] = Vector3.new(0, 100, 0)
-                        elseif Mode.Value == "Jitter" then
-                            -- Rapidly flip between looking up and down
-                            lastJitter = not lastJitter
-                            args[2] = lastJitter and Vector3.new(0, 100, 0) or Vector3.new(0, -100, 0)
-                        end
-                        
-                        return oldNamecall(self, unpack(args))
-                    end
-                    return oldNamecall(self, ...)
-                end)
-                
-                AntiAim:Clean(function()
-                    hookmetamethod(game, "__namecall", oldNamecall)
-                end)
+                applyFlags()
+                -- Optimize standard engine settings
+                settings().Network.IncomingReplicationLag = 0
+                print("Vape: Extended Ping Boost FFlags Applied.")
             end
         end,
-        Tooltip = "Spoofs your LookAngle to look down/up/jitter to avoid headshots."
-    })
-
-    Mode = AntiAim:CreateDropdown({
-        Name = "Mode",
-        List = {"Down", "Up", "Jitter"},
-        Function = function() end
+        Tooltip = "Uses setfflag to optimize RakNet and network protocols for minimum ping."
     })
 end)
-																																																																																																																																																																																																																				
+																																																																																																																																																																																																																					
