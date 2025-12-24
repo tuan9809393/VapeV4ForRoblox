@@ -7921,3 +7921,61 @@ run(function()
 	})
 	
 end)
+
+run(function()
+    local LegitTab = (vape and vape.Categories and vape.Categories.Legit) or (vape and vape.Categories and vape.Categories.Utility)
+    if not LegitTab then return end 
+
+    local AntiAim = {Enabled = false}
+    local Mode = {Value = "Down"}
+    local JitterSpeed = {Value = 0.1}
+    
+    local lastJitter = false
+
+    AntiAim = LegitTab:CreateModule({
+        Name = "AntiAim",
+        Function = function(callback)
+            if callback then
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("ServerEvents"):WaitForChild("LookAngle")
+                
+                -- Hook the Namecall to catch the FireServer call you logged
+                local oldNamecall
+                oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+                    local method = getnamecallmethod()
+                    local args = {...}
+
+                    -- Match the remote and method from your log
+                    if not checkcaller() and self == remote and method == "FireServer" and AntiAim.Enabled then
+                        -- args[2] is the Vector3 used for LookAngle
+                        if Mode.Value == "Down" then
+                            -- Force look vector straight down
+                            args[2] = Vector3.new(0, -100, 0)
+                        elseif Mode.Value == "Up" then
+                            -- Force look vector straight up
+                            args[2] = Vector3.new(0, 100, 0)
+                        elseif Mode.Value == "Jitter" then
+                            -- Rapidly flip between looking up and down
+                            lastJitter = not lastJitter
+                            args[2] = lastJitter and Vector3.new(0, 100, 0) or Vector3.new(0, -100, 0)
+                        end
+                        
+                        return oldNamecall(self, unpack(args))
+                    end
+                    return oldNamecall(self, ...)
+                end)
+                
+                AntiAim:Clean(function()
+                    hookmetamethod(game, "__namecall", oldNamecall)
+                end)
+            end
+        end,
+        Tooltip = "Spoofs your LookAngle to look down/up/jitter to avoid headshots."
+    })
+
+    Mode = AntiAim:CreateDropdown({
+        Name = "Mode",
+        List = {"Down", "Up", "Jitter"},
+        Function = function() end
+    })
+end)
+																																																																																																																																																																																																																				
