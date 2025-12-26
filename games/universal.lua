@@ -1521,19 +1521,11 @@ run(function()
     local Targets
     local ShootDelay
     local Distance
-    local OffsetInput = {Value = "0, 0, 0"} -- Default string
+    local OffsetX, OffsetY = {Value = 0}, {Value = 0}
+    local UseCenter = {Enabled = true}
     
     local rayCheck = RaycastParams.new()
     local delayCheck = tick()
-
-    -- Helper to turn "0, 0, 0" string into numbers
-    local function parseCoords(str)
-        local coords = {}
-        for val in string.gmatch(str, "([^,%s]+)") do
-            table.insert(coords, tonumber(val) or 0)
-        end
-        return coords[1] or 0, coords[2] or 0
-    end
 
     local function getTriggerBotTarget()
         rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
@@ -1550,10 +1542,20 @@ run(function()
         end
     end
 
+    -- Native VIM Touch with Position Control
     local function performNativeTouch()
-        local x, y = parseCoords(OffsetInput.Value)
+        local x, y
+        if UseCenter.Enabled then
+            local viewport = gameCamera.ViewportSize
+            x, y = viewport.X / 2, viewport.Y / 2
+        else
+            -- Uses your custom 0, 0 or specific coordinates
+            x, y = OffsetX.Value, OffsetY.Value
+        end
+
         local touchId = 0 
-        
+        -- SendTouchEvent(touchId, state, x, y)
+        -- State 0 = Begin, State 2 = End
         VIM:SendTouchEvent(touchId, 0, x, y)
         task.wait(0.02)
         VIM:SendTouchEvent(touchId, 2, x, y)
@@ -1575,22 +1577,33 @@ run(function()
                 end)
             end
         end,
-        Tooltip = 'Mobile TriggerBot with Text Box Offset'
+        Tooltip = 'Mobile TriggerBot using Native VIM Touch Events'
     })
 
-    -- UI with Text Box
+    -- UI Setup
     Targets = TriggerBot:CreateTargets({ Players = true, NPCs = true })
-
-    -- Using the Textbox for that exact "0, 0, 0" look
-    OffsetInput = TriggerBot:CreateTextBox({
-        Name = "Offset",
-        TempText = "X, Y, Z",
-        FocusLost = function(text)
-            OffsetInput.Value = text
-        end
+    
+    UseCenter = TriggerBot:CreateToggle({
+        Name = "Use Screen Center",
+        Default = true,
+        Tooltip = "If off, uses the X/Y sliders below."
     })
-    -- Set default visual value
-    OffsetInput:SetValue("0, 0, 0")
+
+    OffsetX = TriggerBot:CreateSlider({
+        Name = 'Touch X (Horizontal)',
+        Min = 0,
+        Max = 2000,
+        Default = 0,
+        Function = function() end
+    })
+
+    OffsetY = TriggerBot:CreateSlider({
+        Name = 'Touch Y (Vertical)',
+        Min = 0,
+        Max = 2000,
+        Default = 0,
+        Function = function() end
+    })
 
     ShootDelay = TriggerBot:CreateSlider({
         Name = 'Shot Delay',
