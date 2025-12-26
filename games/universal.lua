@@ -1514,88 +1514,86 @@ run(function()
 		Visible = false
 	})
 end)
-	
+
 run(function()
-	local TriggerBot
-	local Targets
-	local ShootDelay
-	local Distance
-	local rayCheck, delayCheck = RaycastParams.new(), tick()
-	
-	local function getTriggerBotTarget()
-		rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
-	
-		local ray = workspace:Raycast(gameCamera.CFrame.Position, gameCamera.CFrame.LookVector * Distance.Value, rayCheck)
-		if ray and ray.Instance then
-			for _, v in entitylib.List do
-				if v.Targetable and v.Character and (Targets.Players.Enabled and v.Player or Targets.NPCs.Enabled and v.NPC) then
-					if ray.Instance:IsDescendantOf(v.Character) then
-						return entitylib.isVulnerable(v) and v
-					end
-				end
-			end
-		end
-	end
-	
-	TriggerBot = vape.Categories.Combat:CreateModule({
-		Name = 'TriggerBot',
-		Function = function(callback)
-			if callback then
-				repeat
-					if mouse1click and (isrbxactive or iswindowactive)() then
-						if getTriggerBotTarget() and canClick() then
-							if delayCheck < tick() then
-								if mouseClicked then
-									mouse1release()
-									delayCheck = tick() + ShootDelay.Value
-								else
-									mouse1press()
-								end
-								mouseClicked = not mouseClicked
-							end
-						else
-							if mouseClicked then
-								mouse1release()
-							end
-							mouseClicked = false
-						end
-					end
-					task.wait()
-				until not TriggerBot.Enabled
-			else
-				if mouse1click and (isrbxactive or iswindowactive)() then
-					if mouseClicked then
-						mouse1release()
-					end
-				end
-				mouseClicked = false
-			end
-		end,
-		Tooltip = 'Shoots people that enter your crosshair'
-	})
-	Targets = TriggerBot:CreateTargets({
-		Players = true,
-		NPCs = true
-	})
-	ShootDelay = TriggerBot:CreateSlider({
-		Name = 'Next Shot Delay',
-		Min = 0,
-		Max = 1,
-		Decimal = 100,
-		Suffix = function(val)
-			return val == 1 and 'second' or 'seconds'
-		end,
-		Tooltip = 'The delay set after shooting a target'
-	})
-	Distance = TriggerBot:CreateSlider({
-		Name = 'Distance',
-		Min = 0,
-		Max = 1000,
-		Default = 1000,
-		Suffix = function(val)
-			return val == 1 and 'stud' or 'studs'
-		end
-	})
+    local VIM = game:GetService("VirtualInputManager")
+    local TriggerBot
+    local Targets
+    local ShootDelay
+    local Distance
+    local rayCheck, delayCheck = RaycastParams.new(), tick()
+    local mouseClicked = false
+    
+    -- Helper function for VIM Click
+    local function vimMouseButtonEvent(isDown)
+        local mousePos = game:GetService("UserInputService"):GetMouseLocation()
+        -- 0 = Left Click, 1 = Right Click
+        VIM:SendMouseButtonEvent(mousePos.X, mousePos.Y, 0, isDown, game, 1)
+    end
+
+    local function getTriggerBotTarget()
+        rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
+    
+        local ray = workspace:Raycast(gameCamera.CFrame.Position, gameCamera.CFrame.LookVector * Distance.Value, rayCheck)
+        if ray and ray.Instance then
+            for _, v in entitylib.List do
+                if v.Targetable and v.Character and (Targets.Players.Enabled and v.Player or Targets.NPCs.Enabled and v.NPC) then
+                    if ray.Instance:IsDescendantOf(v.Character) then
+                        return entitylib.isVulnerable(v) and v
+                    end
+                end
+            end
+        end
+    end
+    
+    TriggerBot = vape.Categories.Combat:CreateModule({
+        Name = 'TriggerBot',
+        Function = function(callback)
+            if callback then
+                repeat
+                    -- VIM works internally, but checking if window is active is still good practice
+                    if (isrbxactive or iswindowactive or function() return true end)() then
+                        if getTriggerBotTarget() then
+                            if delayCheck < tick() then
+                                if mouseClicked then
+                                    vimMouseButtonEvent(false) -- Release
+                                    delayCheck = tick() + ShootDelay.Value
+                                else
+                                    vimMouseButtonEvent(true) -- Press
+                                end
+                                mouseClicked = not mouseClicked
+                            end
+                        else
+                            if mouseClicked then
+                                vimMouseButtonEvent(false) -- Auto-release if target lost
+                            end
+                            mouseClicked = false
+                        end
+                    end
+                    task.wait()
+                until not TriggerBot.Enabled
+            else
+                if mouseClicked then
+                    vimMouseButtonEvent(false)
+                end
+                mouseClicked = false
+            end
+        end,
+        Tooltip = 'Shoots people that enter your crosshair using VirtualInputManager'
+    })
+
+    -- (Rest of your settings sliders remain the same)
+    Targets = TriggerBot:CreateTargets({ Players = true, NPCs = true })
+    ShootDelay = TriggerBot:CreateSlider({
+        Name = 'Next Shot Delay',
+        Min = 0, Max = 1, Decimal = 100,
+        Suffix = function(val) return val == 1 and 'second' or 'seconds' end
+    })
+    Distance = TriggerBot:CreateSlider({
+        Name = 'Distance',
+        Min = 0, Max = 1000, Default = 1000,
+        Suffix = function(val) return val == 1 and 'stud' or 'studs' end
+    })
 end)
 	
 run(function()
