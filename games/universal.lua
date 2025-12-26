@@ -7986,3 +7986,68 @@ run(function()
         Tooltip = "network optimizer."
     })
 end)
+
+run(function()
+    -- Ensure we are in the Blatant category
+    local BlatantTab = vape.Categories.Blatant or vape.Categories.Movement
+    if not BlatantTab then return end
+
+    local Desync = {Enabled = false}
+    local DesyncMode = {Value = "Physics"}
+    local DesyncIntensity = {Value = 0.04}
+
+    -- Function to apply the FFlag-based Desync
+    local function setDesyncState(state)
+        if not setfflag then return end
+        
+        if state then
+            if DesyncMode.Value == "Physics" then
+                -- Classic "WorldStep" desync: makes your physics steps inconsistent to others
+                setfflag("WorldStepMax", "-99999999999999")
+            elseif DesyncMode.Value == "Network" then
+                -- NextGen Replicator desync: disrupts how the server reads your position
+                setfflag("NextGenReplicatorEnabledWrite4", "True")
+            end
+        else
+            -- Reset to defaults
+            setfflag("WorldStepMax", "0.033333333")
+            setfflag("NextGenReplicatorEnabledWrite4", "False")
+        end
+    end
+
+    Desync = BlatantTab:CreateModule({
+        Name = "Desync",
+        Function = function(callback)
+            if callback then
+                -- Start the Desync Loop
+                task.spawn(function()
+                    while Desync.Enabled do
+                        setDesyncState(true)
+                        task.wait(DesyncIntensity.Value)
+                        setDesyncState(false)
+                        -- A small gap is needed so you don't instantly kick for "Physics Out of Sync"
+                        task.wait(0.01)
+                    end
+                end)
+            else
+                setDesyncState(false)
+            end
+        end,
+        Tooltip = "Blatantly desyncs your character from the server. Makes you harder to hit."
+    })
+
+    DesyncMode = Desync:CreateDropdown({
+        Name = "Mode",
+        List = {"Physics", "Network"},
+        Function = function() end
+    })
+
+    DesyncIntensity = Desync:CreateSlider({
+        Name = "Intensity",
+        Min = 0.01,
+        Max = 0.2,
+        Decimal = 2,
+        Default = 0.04,
+        Tooltip = "How long to stay desynced. Higher = More Desync, but risk of kick."
+    })
+end)
