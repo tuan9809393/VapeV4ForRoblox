@@ -1516,7 +1516,6 @@ run(function()
 end)
 
 run(function()
-    local VIM = game:GetService("VirtualInputManager")
     local TriggerBot
     local Targets
     local ShootDelay
