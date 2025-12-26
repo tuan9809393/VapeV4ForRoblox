@@ -1517,7 +1517,6 @@ end)
 
 run(function()
     local VIM = game:GetService("VirtualInputManager")
-    local UIS = game:GetService("UserInputService")
     local TriggerBot
     local Targets
     local ShootDelay
@@ -1525,9 +1524,7 @@ run(function()
     local rayCheck = RaycastParams.new()
     local delayCheck = tick()
     
-    -- Variables for VIM tap simulation
-    local tapping = false
-
+    -- Function to get the current crosshair target
     local function getTriggerBotTarget()
         rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
         local ray = workspace:Raycast(gameCamera.CFrame.Position, gameCamera.CFrame.LookVector * Distance.Value, rayCheck)
@@ -1543,16 +1540,21 @@ run(function()
         end
     end
 
-    -- Pure VIM Mobile Tap Logic
-    local function performVimTap()
+    -- Full VIM Native Touch Simulation
+    -- State: 0 = TouchBegin, 1 = TouchUpdate, 2 = TouchEnd
+    local function performNativeTouch()
         local viewportSize = gameCamera.ViewportSize
         local x, y = viewportSize.X / 2, viewportSize.Y / 2
+        local touchId = 0 -- Default touch ID
+
+        -- Step 1: Touch Begin (Start the tap)
+        VIM:SendTouchEvent(touchId, 0, x, y)
         
-        -- SendMouseButtonEvent acts as a tap on mobile executors
-        -- Parameters: (X, Y, Button[0=Left], isDown, Object, clickCount)
-        VIM:SendMouseButtonEvent(x, y, 0, true, game, 1)
-        task.wait(0.05) -- Minimum duration for the game to register the "touch"
-        VIM:SendMouseButtonEvent(x, y, 0, false, game, 1)
+        -- Small delay to ensure the engine registers the contact
+        task.wait(0.02)
+        
+        -- Step 2: Touch End (Lift the finger)
+        VIM:SendTouchEvent(touchId, 2, x, y)
     end
 
     TriggerBot = vape.Categories.Combat:CreateModule({
@@ -1564,16 +1566,16 @@ run(function()
                         local target = getTriggerBotTarget()
                         
                         if target and tick() > delayCheck then
-                            performVimTap()
+                            performNativeTouch()
                             delayCheck = tick() + ShootDelay.Value
                         end
                         
-                        task.wait() -- Fast polling for crosshair entry
+                        task.wait() -- Polish as fast as possible
                     end
                 end)
             end
         end,
-        Tooltip = 'VIM-only Mobile TriggerBot for crosshair-based shooting.'
+        Tooltip = 'Native Mobile Touch TriggerBot (VIM Only)'
     })
 
     -- UI Setup
