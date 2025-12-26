@@ -8045,10 +8045,5 @@ run(function()
         Max = 1.0, -- Anything over 0.6 is extremely blatant and might kick
         Decimal = 1,
         Default = 0.3
-    })
-
-    ghostColor = Backtrack:CreateColorWheel({
-        Name = "Ghost Color",
-        Default = Color3.fromRGB(255, 0, 0)
-    })
+	})
 end)
