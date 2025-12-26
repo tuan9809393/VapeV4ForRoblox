@@ -1517,13 +1517,16 @@ end)
 
 run(function()
     local VIM = game:GetService("VirtualInputManager")
+    local UIS = game:GetService("UserInputService")
     local TriggerBot
     local Targets
     local ShootDelay
     local Distance
     local rayCheck = RaycastParams.new()
     local delayCheck = tick()
-    local mouseClicked = false
+    
+    -- Variables for VIM tap simulation
+    local tapping = false
 
     local function getTriggerBotTarget()
         rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
@@ -1540,13 +1543,16 @@ run(function()
         end
     end
 
-    -- VIM Click Simulation (Mobile Friendly)
-    local function simulateClick(isDown)
+    -- Pure VIM Mobile Tap Logic
+    local function performVimTap()
         local viewportSize = gameCamera.ViewportSize
         local x, y = viewportSize.X / 2, viewportSize.Y / 2
         
-        -- mouseButton: 0 = Left, 1 = Right, 2 = Middle
-        VIM:SendMouseButtonEvent(x, y, 0, isDown, game, 1)
+        -- SendMouseButtonEvent acts as a tap on mobile executors
+        -- Parameters: (X, Y, Button[0=Left], isDown, Object, clickCount)
+        VIM:SendMouseButtonEvent(x, y, 0, true, game, 1)
+        task.wait(0.05) -- Minimum duration for the game to register the "touch"
+        VIM:SendMouseButtonEvent(x, y, 0, false, game, 1)
     end
 
     TriggerBot = vape.Categories.Combat:CreateModule({
@@ -1554,46 +1560,36 @@ run(function()
         Function = function(callback)
             if callback then
                 task.spawn(function()
-                    repeat
+                    while TriggerBot.Enabled do
                         local target = getTriggerBotTarget()
-                        if target then
-                            if delayCheck < tick() then
-                                if not mouseClicked then
-                                    simulateClick(true) -- Press
-                                    mouseClicked = true
-                                    -- Short wait to register the click/tap
-                                    task.wait(0.03) 
-                                    simulateClick(false) -- Release
-                                    mouseClicked = false
-                                    delayCheck = tick() + ShootDelay.Value
-                                end
-                            end
+                        
+                        if target and tick() > delayCheck then
+                            performVimTap()
+                            delayCheck = tick() + ShootDelay.Value
                         end
-                        task.wait()
-                    until not TriggerBot.Enabled
+                        
+                        task.wait() -- Fast polling for crosshair entry
+                    end
                 end)
-            else
-                if mouseClicked then
-                    simulateClick(false)
-                end
-                mouseClicked = false
             end
         end,
-        Tooltip = 'Shoots people that enter your crosshair (Mobile Compatible)'
+        Tooltip = 'VIM-only Mobile TriggerBot for crosshair-based shooting.'
     })
 
-    -- UI Settings (Kept original logic)
+    -- UI Setup
     Targets = TriggerBot:CreateTargets({ Players = true, NPCs = true })
+    
     ShootDelay = TriggerBot:CreateSlider({
-        Name = 'Next Shot Delay',
+        Name = 'Shot Delay',
         Min = 0,
         Max = 1,
         Decimal = 100,
         Default = 0.1,
         Suffix = function(val) return val == 1 and 'sec' or 'secs' end
     })
+
     Distance = TriggerBot:CreateSlider({
-        Name = 'Distance',
+        Name = 'Max Distance',
         Min = 0,
         Max = 1000,
         Default = 1000,
