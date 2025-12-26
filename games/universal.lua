@@ -7921,79 +7921,68 @@ run(function()
 	})
 	
 end)
-																																																																																																																																																																																																																				
+																																																									
 run(function()
     local LegitTab = (vape and vape.Categories and vape.Categories.Legit) or (vape and vape.Categories and vape.Categories.Utility)
     if not LegitTab then return end 
 
-    local PingBoost = {Enabled = false}
+    local PingBoostExtreme = {Enabled = false}
     
-    -- Full list of provided FFlags and networking optimizations
-    local fflagList = {
-        -- RakNet Bandwidth & Frequency
+    local fflags = {
         ["DFIntRaknetBandwidthPingSendEveryXSeconds"] = 1,
         ["DFIntRaknetBandwidthInfluxHundredthsPercentageV2"] = 10000,
-        ["DFFlagSampleAndRefreshRakPing"] = true,
-        ["DFFlagRakNetUseSlidingWindow4"] = false,
-        ["DFFlagRakNetStaleSendQueue"] = true,
-        ["DFFlagRakNetMissingPing1"] = true,
-        ["DFFlagRakNetMissingPing"] = false,
-        ["DFFlagRakNetFixBwCollapse"] = false,
-        ["DFFlagRakNetEnablePoll"] = true,
-        ["DFFlagRakNetDisconnectNotification"] = true,
-        ["DFFlagRakNetDetectRecvThreadOverload"] = true,
-        ["DFFlagRakNetDetectNetUnreachable"] = true,
-        ["DFFlagRakNetDecoupleRecvAndUpdateLoopShutdown"] = true,
-        ["DFFlagRakNetCalculateApplicationFeedback2"] = true,
-        
-        -- RakNet Ints/Timing
-        ["FIntRakNetResendBufferArrayLength"] = 128,
-        ["FIntRakNetDatagramMessageldArrayLength"] = 4096,
-        ["DFIntRakNetUseSlidingWindow2_trackLengthMs"] = 300,
-        ["DFIntRakNetUseSlidingWindow2_startUpdateMs"] = 1,
-        ["DFIntRakNetUseSlidingWindow2_startInitSpeed"] = 100000,
-        ["DFIntRakNetUseSlidingWindow2_startFactor"] = 100,
-        ["DFIntRakNetUseSlidingWindow2_rangeCount"] = 20,
-        ["DFIntRakNetUseSlidingWindow2_minSpeed"] = 512,
-        ["DFIntRakNetUseSlidingWindow2_minRtt"] = 500,
-        ["DFIntRakNetUseSlidingWindow2_maxSpeed"] = 5000,
-        ["DFIntRakNetStaleSendQueueTriggerMs"] = 100,
-        ["DFIntRakNetResendRttMultiple"] = 2,
-        ["DFIntRakNetPingFrequencyMillisecond"] = 50,
+        ["DFIntRakNetPingFrequencyMillisecond"] = 1,
         ["DFIntRakNetLoopMs"] = 1,
-        ["DFIntRaknetDownloadEpisodeInMs"] = 500,
-        ["DFIntRakNetClockDriftAdjustmentPerPingMillisecond"] = 25,
-        
-        -- Additional Network Stability
-        ["DFFlagDebugRakPeerReceiveCountDistributedPackets"] = false,
-        ["FFlagNetworkExecutorParallelResumption"] = true,
-        ["FIntNetworkPredictionLatencyCompensation"] = 0
+        ["DFIntRakNetStaleSendQueueTriggerMs"] = 1,
+        ["DFFlagRakNetUseSlidingWindow4"] = false, 
+        ["DFIntRakNetUseSlidingWindow2_trackLengthMs"] = 1,
+        ["DFIntRakNetUseSlidingWindow2_startUpdateMs"] = 1,
+        ["DFIntRakNetUseSlidingWindow2_startInitSpeed"] = 1000000,
+        ["DFIntRakNetUseSlidingWindow2_startFactor"] = 1000,
+        ["DFIntRakNetUseSlidingWindow2_minSpeed"] = 10000,
+        ["DFIntRakNetUseSlidingWindow2_maxSpeed"] = 2000000,
+        ["DFIntRakNetUseSlidingWindow2_minRtt"] = 1,
+        ["FIntRakNetResendBufferArrayLength"] = 1024,
+        ["FIntRakNetDatagramMessageldArrayLength"] = 1024,
+        ["DFFlagRakNetStaleSendQueue"] = true,
+        ["DFFlagRakNetMissingPing"] = false, 
+        ["DFFlagRakNetMissingPing1"] = true,
+        ["DFIntNetworkPrediction"] = 120,
+        ["FIntNetworkPredictionLatencyCompensation"] = 0,
+        ["DFIntNetworkLatencyTolerance"] = 1,
+        ["DFIntServerPhysicsUpdateRate"] = 60,
+        ["DFIntDataSenderRate"] = 3000,
+        ["DFIntMaxMissedWorldSteps"] = 1,
+        ["DFIntConnectionMTUSize"] = 1450,
+        ["DFIntNetworkDataCompressionThreshold"] = 1000,
+        ["FIntTaskSchedulerTargetFps"] = 10000,
+        ["FFlagTaskSchedulerYieldForSleep"] = false
     }
 
     local function applyFlags()
-        if not setfflag then 
-            print("Vape: setfflag function not found in this executor.")
-            return 
-        end
-
-        for flag, value in pairs(fflagList) do
-            pcall(function()
-                setfflag(flag, tostring(value))
-            end)
+        if not setfflag then return end
+        for flag, val in pairs(fflags) do
+            pcall(function() setfflag(flag, tostring(val)) end)
         end
     end
 
-    PingBoost = LegitTab:CreateModule({
+    PingBoostExtreme = LegitTab:CreateModule({
         Name = "PingBoost",
         Function = function(callback)
             if callback then
                 applyFlags()
-                -- Optimize standard engine settings
-                settings().Network.IncomingReplicationLag = 0
-                print("Vape: Extended Ping Boost FFlags Applied.")
+                task.spawn(function()
+                    while PingBoostExtreme.Enabled do
+                        local sets = settings()
+                        if sets and sets.Network then
+                            sets.Network.IncomingReplicationLag = 0
+                            pcall(function() sets.Network.ExtraMemoryUsed = 0 end)
+                        end
+                        task.wait(1)
+                    end
+                end)
             end
         end,
-        Tooltip = "Uses setfflag to optimize RakNet and network protocols for minimum ping."
+        Tooltip = "network optimizer."
     })
 end)
-																																																																																																																																																																																																																					
