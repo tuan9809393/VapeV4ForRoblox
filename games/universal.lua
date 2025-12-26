@@ -7988,30 +7988,31 @@ run(function()
 end)
 
 run(function()
-    -- Ensure we are in the Blatant category
-    local BlatantTab = vape.Categories.Blatant or vape.Categories.Movement
-    if not BlatantTab then return end
+    local BlatantTab = (vape and vape.Categories and vape.Categories.Blatant) or (vape and vape.Categories and vape.Categories.Movement)
+    if not BlatantTab then return end 
 
     local Desync = {Enabled = false}
-    local DesyncMode = {Value = "Physics"}
-    local DesyncIntensity = {Value = 0.04}
+    local Mode = {Value = "Aurora"}
+    local Strength = {Value = 0.04}
 
-    -- Function to apply the FFlag-based Desync
-    local function setDesyncState(state)
+    -- This function applies the actual Roblox engine desync
+    local function applyDesync(state)
         if not setfflag then return end
         
         if state then
-            if DesyncMode.Value == "Physics" then
-                -- Classic "WorldStep" desync: makes your physics steps inconsistent to others
-                setfflag("WorldStepMax", "-99999999999999")
-            elseif DesyncMode.Value == "Network" then
-                -- NextGen Replicator desync: disrupts how the server reads your position
+            if Mode.Value == "Aurora" then
+                -- NextGen Replicator (aka Aurora) Desync
+                -- This makes you appear in one spot while moving in another
                 setfflag("NextGenReplicatorEnabledWrite4", "True")
+            elseif Mode.Value == "WorldStep" then
+                -- Negative physics step desync
+                -- This creates the "jittery/teleporting" look to other players
+                setfflag("WorldStepMax", "-99999999999999")
             end
         else
-            -- Reset to defaults
-            setfflag("WorldStepMax", "0.033333333")
+            -- Reset to Roblox defaults
             setfflag("NextGenReplicatorEnabledWrite4", "False")
+            setfflag("WorldStepMax", "0.033333333")
         end
     end
 
@@ -8019,35 +8020,34 @@ run(function()
         Name = "Desync",
         Function = function(callback)
             if callback then
-                -- Start the Desync Loop
                 task.spawn(function()
                     while Desync.Enabled do
-                        setDesyncState(true)
-                        task.wait(DesyncIntensity.Value)
-                        setDesyncState(false)
-                        -- A small gap is needed so you don't instantly kick for "Physics Out of Sync"
-                        task.wait(0.01)
+                        applyDesync(true)
+                        -- Strength controls the "blink" duration
+                        task.wait(Strength.Value)
+                        applyDesync(false)
+                        task.wait(0.01) -- Brief pause to prevent connection drop
                     end
                 end)
             else
-                setDesyncState(false)
+                applyDesync(false)
             end
         end,
-        Tooltip = "Blatantly desyncs your character from the server. Makes you harder to hit."
+        Tooltip = "Uses Aurora & WorldStep flags to make your hitbox impossible to hit."
     })
 
-    DesyncMode = Desync:CreateDropdown({
+    Mode = Desync:CreateDropdown({
         Name = "Mode",
-        List = {"Physics", "Network"},
+        List = {"Aurora", "WorldStep"},
         Function = function() end
     })
 
-    DesyncIntensity = Desync:CreateSlider({
-        Name = "Intensity",
+    Strength = Desync:CreateSlider({
+        Name = "Strength",
         Min = 0.01,
-        Max = 0.2,
+        Max = 0.15,
         Decimal = 2,
         Default = 0.04,
-        Tooltip = "How long to stay desynced. Higher = More Desync, but risk of kick."
+        Tooltip = "How long you stay desynced. Higher = More broken, but might kick."
     })
 end)
