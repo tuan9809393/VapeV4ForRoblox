@@ -1521,10 +1521,20 @@ run(function()
     local Targets
     local ShootDelay
     local Distance
+    local OffsetInput = {Value = "0, 0, 0"} -- Default string
+    
     local rayCheck = RaycastParams.new()
     local delayCheck = tick()
-    
-    -- Function to get the current crosshair target
+
+    -- Helper to turn "0, 0, 0" string into numbers
+    local function parseCoords(str)
+        local coords = {}
+        for val in string.gmatch(str, "([^,%s]+)") do
+            table.insert(coords, tonumber(val) or 0)
+        end
+        return coords[1] or 0, coords[2] or 0
+    end
+
     local function getTriggerBotTarget()
         rayCheck.FilterDescendantsInstances = {lplr.Character, gameCamera}
         local ray = workspace:Raycast(gameCamera.CFrame.Position, gameCamera.CFrame.LookVector * Distance.Value, rayCheck)
@@ -1540,65 +1550,64 @@ run(function()
         end
     end
 
-    -- Full VIM Native Touch Simulation
-    -- State: 0 = TouchBegin, 1 = TouchUpdate, 2 = TouchEnd
     local function performNativeTouch()
-        local viewportSize = gameCamera.ViewportSize
-        local x, y = viewportSize.X / 2, viewportSize.Y / 2
-        local touchId = 0 -- Default touch ID
-
-        -- Step 1: Touch Begin (Start the tap)
+        local x, y = parseCoords(OffsetInput.Value)
+        local touchId = 0 
+        
         VIM:SendTouchEvent(touchId, 0, x, y)
-        
-        -- Small delay to ensure the engine registers the contact
         task.wait(0.02)
-        
-        -- Step 2: Touch End (Lift the finger)
         VIM:SendTouchEvent(touchId, 2, x, y)
     end
 
     TriggerBot = vape.Categories.Combat:CreateModule({
-        Name = 'TriggerBot',
+        Name = 'TriggerBotVIM',
         Function = function(callback)
             if callback then
                 task.spawn(function()
                     while TriggerBot.Enabled do
                         local target = getTriggerBotTarget()
-                        
                         if target and tick() > delayCheck then
                             performNativeTouch()
                             delayCheck = tick() + ShootDelay.Value
                         end
-                        
-                        task.wait() -- Polish as fast as possible
+                        task.wait()
                     end
                 end)
             end
         end,
-        Tooltip = 'Native Mobile Touch TriggerBot (VIM Only)'
+        Tooltip = 'Mobile TriggerBot with Text Box Offset'
     })
 
-    -- UI Setup
+    -- UI with Text Box
     Targets = TriggerBot:CreateTargets({ Players = true, NPCs = true })
-    
+
+    -- Using the Textbox for that exact "0, 0, 0" look
+    OffsetInput = TriggerBot:CreateTextBox({
+        Name = "Offset",
+        TempText = "X, Y, Z",
+        FocusLost = function(text)
+            OffsetInput.Value = text
+        end
+    })
+    -- Set default visual value
+    OffsetInput:SetValue("0, 0, 0")
+
     ShootDelay = TriggerBot:CreateSlider({
         Name = 'Shot Delay',
         Min = 0,
         Max = 1,
         Decimal = 100,
-        Default = 0.1,
-        Suffix = function(val) return val == 1 and 'sec' or 'secs' end
+        Default = 0.1
     })
 
     Distance = TriggerBot:CreateSlider({
-        Name = 'Max Distance',
+        Name = 'Distance',
         Min = 0,
         Max = 1000,
-        Default = 1000,
-        Suffix = function(val) return val == 1 and 'stud' or 'studs' end
+        Default = 1000
     })
 end)
-	
+
 run(function()
 	local AntiFall
 	local Method
