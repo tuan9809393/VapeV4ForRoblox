@@ -7988,29 +7988,31 @@ run(function()
 end)
 
 run(function()
-    local BlatantTab = vape.Categories.Blatant or vape.Categories.Combat
+    -- Ensure we put this in the Blatant category
+    local BlatantTab = vape.Categories.Blatant
     if not BlatantTab then return end
 
     local Backtrack = {Enabled = false}
-    local BacktrackAmount = {Value = 3} -- How many "frames" to look back
-    local ghostParts = {}
-
-    -- Function to create a backtrack ghost
-    local function createGhost(char)
-        if not char:FindFirstChild("HumanoidRootPart") then return end
+    local BacktrackDuration = {Value = 0.3} -- How long the ghost stays
+    local ghostColor = {Value = Color3.fromRGB(255, 0, 0)}
+    
+    -- Function to create the ghost part
+    local function createBacktrackGhost(plrEntity)
+        if not plrEntity.RootPart then return end
         
-        -- Clone parts to create a visual ghost
         local ghost = Instance.new("Part")
-        ghost.Size = char.HumanoidRootPart.Size
-        ghost.CFrame = char.HumanoidRootPart.CFrame
+        ghost.Name = "BacktrackGhost"
+        ghost.Size = plrEntity.RootPart.Size
+        ghost.CFrame = plrEntity.RootPart.CFrame
         ghost.Anchored = true
         ghost.CanCollide = false
-        ghost.Transparency = 0.5
-        ghost.Color = Color3.fromRGB(255, 0, 0)
+        ghost.Transparency = 0.6
+        ghost.Color = ghostColor.Value
+        ghost.Material = Enum.Material.ForceField -- Makes it look like a "hologram"
         ghost.Parent = workspace
         
-        -- Clean up ghost after the backtrack duration
-        task.delay(BacktrackAmount.Value * 0.1, function()
+        -- Clean up after the duration
+        task.delay(BacktrackDuration.Value, function()
             ghost:Destroy()
         end)
     end
@@ -8019,34 +8021,34 @@ run(function()
         Name = "Backtrack",
         Function = function(callback)
             if callback then
-                -- Heartbeat loop to track player positions
+                -- Heartbeat loop is better for Roblox physics than RenderStepped
                 Backtrack:Clean(game:GetService("RunService").Heartbeat:Connect(function()
                     if not Backtrack.Enabled then return end
                     
-                    for _, plr in pairs(game.Players:GetPlayers()) do
-                        if plr ~= game.Players.LocalPlayer and plr.Character then
-                            local char = plr.Character
-                            local root = char:FindFirstChild("HumanoidRootPart")
-                            
-                            if root then
-                                -- Every X frames, we "freeze" their hitbox slightly
-                                if math.random(1, 10) > (10 - BacktrackAmount.Value) then
-                                    createGhost(char)
-                                end
-                            end
+                    -- Get players using Vape's internal entity library
+                    for _, ent in pairs(entitylib.getList()) do
+                        -- Only backtrack enemies, not teammates
+                        if ent.Targetable then
+                            createBacktrackGhost(ent)
                         end
                     end
                 end))
             end
         end,
-        Tooltip = "Leave ghosts behind enemies that you can still hit to deal damage."
+        Tooltip = "Leave a hitable shadow behind enemies (Roblox BedWars)."
     })
 
-    BacktrackAmount = Backtrack:CreateSlider({
-        Name = "Backtrack Range",
-        Min = 1,
-        Max = 10,
-        Default = 3,
-        Tooltip = "Higher = Enemies leave longer trails, but can cause rubberbanding."
+    -- Settings for the module
+    BacktrackDuration = Backtrack:CreateSlider({
+        Name = "Ghost Duration",
+        Min = 0.1,
+        Max = 1.0, -- Anything over 0.6 is extremely blatant and might kick
+        Decimal = 1,
+        Default = 0.3
+    })
+
+    ghostColor = Backtrack:CreateColorWheel({
+        Name = "Ghost Color",
+        Default = Color3.fromRGB(255, 0, 0)
     })
 end)
