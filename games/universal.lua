@@ -7988,66 +7988,65 @@ run(function()
 end)
 
 run(function()
-    local BlatantTab = (vape and vape.Categories and vape.Categories.Blatant) or (vape and vape.Categories and vape.Categories.Movement)
-    if not BlatantTab then return end 
+    local BlatantTab = vape.Categories.Blatant or vape.Categories.Combat
+    if not BlatantTab then return end
 
-    local Desync = {Enabled = false}
-    local Mode = {Value = "Aurora"}
-    local Strength = {Value = 0.04}
+    local Backtrack = {Enabled = false}
+    local BacktrackAmount = {Value = 3} -- How many "frames" to look back
+    local ghostParts = {}
 
-    -- This function applies the actual Roblox engine desync
-    local function applyDesync(state)
-        if not setfflag then return end
+    -- Function to create a backtrack ghost
+    local function createGhost(char)
+        if not char:FindFirstChild("HumanoidRootPart") then return end
         
-        if state then
-            if Mode.Value == "Aurora" then
-                -- NextGen Replicator (aka Aurora) Desync
-                -- This makes you appear in one spot while moving in another
-                setfflag("NextGenReplicatorEnabledWrite4", "True")
-            elseif Mode.Value == "WorldStep" then
-                -- Negative physics step desync
-                -- This creates the "jittery/teleporting" look to other players
-                setfflag("WorldStepMax", "-99999999999999")
-            end
-        else
-            -- Reset to Roblox defaults
-            setfflag("NextGenReplicatorEnabledWrite4", "False")
-            setfflag("WorldStepMax", "0.033333333")
-        end
+        -- Clone parts to create a visual ghost
+        local ghost = Instance.new("Part")
+        ghost.Size = char.HumanoidRootPart.Size
+        ghost.CFrame = char.HumanoidRootPart.CFrame
+        ghost.Anchored = true
+        ghost.CanCollide = false
+        ghost.Transparency = 0.5
+        ghost.Color = Color3.fromRGB(255, 0, 0)
+        ghost.Parent = workspace
+        
+        -- Clean up ghost after the backtrack duration
+        task.delay(BacktrackAmount.Value * 0.1, function()
+            ghost:Destroy()
+        end)
     end
 
-    Desync = BlatantTab:CreateModule({
-        Name = "Desync",
+    Backtrack = BlatantTab:CreateModule({
+        Name = "Backtrack",
         Function = function(callback)
             if callback then
-                task.spawn(function()
-                    while Desync.Enabled do
-                        applyDesync(true)
-                        -- Strength controls the "blink" duration
-                        task.wait(Strength.Value)
-                        applyDesync(false)
-                        task.wait(0.01) -- Brief pause to prevent connection drop
+                -- Heartbeat loop to track player positions
+                Backtrack:Clean(game:GetService("RunService").Heartbeat:Connect(function()
+                    if not Backtrack.Enabled then return end
+                    
+                    for _, plr in pairs(game.Players:GetPlayers()) do
+                        if plr ~= game.Players.LocalPlayer and plr.Character then
+                            local char = plr.Character
+                            local root = char:FindFirstChild("HumanoidRootPart")
+                            
+                            if root then
+                                -- Every X frames, we "freeze" their hitbox slightly
+                                if math.random(1, 10) > (10 - BacktrackAmount.Value) then
+                                    createGhost(char)
+                                end
+                            end
+                        end
                     end
-                end)
-            else
-                applyDesync(false)
+                end))
             end
         end,
-        Tooltip = "Uses Aurora & WorldStep flags to make your hitbox impossible to hit."
+        Tooltip = "Leave ghosts behind enemies that you can still hit to deal damage."
     })
 
-    Mode = Desync:CreateDropdown({
-        Name = "Mode",
-        List = {"Aurora", "WorldStep"},
-        Function = function() end
-    })
-
-    Strength = Desync:CreateSlider({
-        Name = "Strength",
-        Min = 0.01,
-        Max = 0.15,
-        Decimal = 2,
-        Default = 0.04,
-        Tooltip = "How long you stay desynced. Higher = More broken, but might kick."
+    BacktrackAmount = Backtrack:CreateSlider({
+        Name = "Backtrack Range",
+        Min = 1,
+        Max = 10,
+        Default = 3,
+        Tooltip = "Higher = Enemies leave longer trails, but can cause rubberbanding."
     })
 end)
