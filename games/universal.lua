@@ -8011,3 +8011,96 @@ run(function()
     })
 end)
 
+run(function()
+    local Aimbot = {Enabled = false}
+    local AimPart = {Value = "Head"}
+    local Smoothness = {Value = 1}
+    local TeamCheck = {Enabled = false}
+    local WallCheck = {Enabled = false}
+    local MaxDistance = {Value = 200}
+    
+    -- Function to check if a target is valid
+    local function isTargetValid(ent)
+        if not ent.Targetable then return false end
+        if TeamCheck.Enabled and ent.Team == lplr.Team then return false end
+        if (ent.RootPart.Position - entitylib.character.RootPart.Position).Magnitude > MaxDistance.Value then return false end
+        
+        if WallCheck.Enabled then
+            local rayparams = RaycastParams.new()
+            rayparams.FilterDescendantsInstances = {entitylib.character.Character, game:GetService("Workspace").CurrentCamera}
+            rayparams.FilterType = Enum.RaycastFilterType.Exclude
+            
+            local ray = game:GetService("Workspace"):Raycast(
+                game:GetService("Workspace").CurrentCamera.CFrame.Position, 
+                (ent.RootPart.Position - game:GetService("Workspace").CurrentCamera.CFrame.Position).Unit * MaxDistance.Value, 
+                rayparams
+            )
+            if ray and not ray.Instance:IsDescendantOf(ent.Character) then return false end
+        end
+        
+        return true
+    end
+
+    Aimbot = vape.Categories.Combat:CreateModule({
+        Name = "Aimbot",
+        Function = function(callback)
+            if callback then
+                -- Main loop using Vape's RunService connection
+                Aimbot:Clean(game:GetService("RunService").RenderStepped:Connect(function()
+                    local target = entitylib.getClosest({
+                        Part = AimPart.Value,
+                        Players = true,
+                        NPCs = false,
+                        Wallcheck = WallCheck.Enabled
+                    })
+
+                    if target and isTargetValid(target) then
+                        local cam = game:GetService("Workspace").CurrentCamera
+                        local targetPos = target[AimPart.Value].Position
+                        local lookCFrame = CFrame.new(cam.CFrame.Position, targetPos)
+                        
+                        -- Smooth aiming logic
+                        cam.CFrame = cam.CFrame:Lerp(lookCFrame, (1 / Smoothness.Value))
+                    end
+                end))
+            end
+        end,
+        Tooltip = "Automatically faces toward enemies"
+    })
+
+    -- UI Elements
+    AimPart = Aimbot:CreateDropdown({
+        Name = "Target Part",
+        List = {"Head", "HumanoidRootPart"},
+        Function = function() end
+    })
+
+    Smoothness = Aimbot:CreateSlider({
+        Name = "Smoothness",
+        Min = 1,
+        Max = 20,
+        Default = 5,
+        Function = function() end
+    })
+
+    MaxDistance = Aimbot:CreateSlider({
+        Name = "Max Distance",
+        Min = 10,
+        Max = 1000,
+        Default = 200,
+        Function = function() end
+    })
+
+    TeamCheck = Aimbot:CreateToggle({
+        Name = "Team Check",
+        Default = true,
+        Function = function() end
+    })
+
+    WallCheck = Aimbot:CreateToggle({
+        Name = "Wall Check",
+        Default = true,
+        Function = function() end
+    })
+end)
+																																																																																																																																																																																																																											
