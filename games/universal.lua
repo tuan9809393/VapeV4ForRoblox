@@ -7911,18 +7911,18 @@ run(function()
     local Search
     local List
     local Color
-    local MaterialDropdown -- New dropdown for material selection
-    local Reference = {} -- Stores { [Part] = {OriginalColor, OriginalMaterial} }
+    local MaterialDropdown
+    local Reference = {} -- Format: { [Part] = {Color = Color3, Material = Enum.Material} }
 
-    -- Materials list for the dropdown
-    local materialList = {"Neon", "ForceField", "Glass", "Plastic", "SmoothPlastic"}
+    -- Defining the list with proper Enum names
+    local materialNames = {"Neon", "ForceField", "Glass", "Plastic", "SmoothPlastic"}
 
     local function Add(v)
-        -- Check if the part name is in the user's Search list
+        -- Check if the part name matches your list in the GUI
         if not table.find(List.ListEnabled, v.Name) then return end
         
         if v:IsA('BasePart') then
-            -- Store original state if not already stored
+            -- Save the original look before we mess with it
             if not Reference[v] then
                 Reference[v] = {
                     Color = v.Color,
@@ -7930,26 +7930,26 @@ run(function()
                 }
             end
             
-            -- Apply selected modifications
+            -- Apply the new Material and Color
+            -- Using Enum.Material[string] to convert the dropdown selection
             v.Material = Enum.Material[MaterialDropdown.Value]
             v.Color = Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
         end
     end
 
-    -- Create the Module in the Render category
     Search = vape.Categories.Render:CreateModule({
         Name = 'Search',
         Function = function(callback)
             if callback then
-                -- Hook into workspace changes
+                -- Watch for new parts being added to the game
                 Search:Clean(workspace.DescendantAdded:Connect(Add))
                 
-                -- Apply to existing parts
+                -- Check everything already in the game
                 for _, v in workspace:GetDescendants() do
                     Add(v)
                 end
             else
-                -- Restore original part properties when disabled
+                -- RESET: Put everything back to how it was
                 for part, original in pairs(Reference) do
                     if part and part.Parent then
                         part.Color = original.Color
@@ -7959,13 +7959,13 @@ run(function()
                 table.clear(Reference)
             end
         end,
-        Tooltip = 'Changes the material/color of selected parts.'
+        Tooltip = 'Changes selected parts to materials like Neon or ForceField'
     })
 
-    -- Text List for parts to search for
     List = Search:CreateTextList({
         Name = 'Parts',
         Function = function()
+            -- Refresh the module if the list changes
             if Search.Enabled then
                 Search:Toggle()
                 Search:Toggle()
@@ -7973,20 +7973,20 @@ run(function()
         end
     })
 
-    -- Material Selection Dropdown
+    -- This is where the material logic lives
     MaterialDropdown = Search:CreateDropdown({
         Name = 'Material',
-        List = materialList,
-        Function = function()
+        List = materialNames,
+        Function = function(val)
             if Search.Enabled then
                 for part, _ in pairs(Reference) do
-                    part.Material = Enum.Material[MaterialDropdown.Value]
+                    -- Update all currently "found" parts to the new material
+                    part.Material = Enum.Material[val]
                 end
             end
         end
     })
 
-    -- Color Slider
     Color = Search:CreateColorSlider({
         Name = 'Color',
         Function = function(hue, sat, val)
