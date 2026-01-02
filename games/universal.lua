@@ -7908,52 +7908,61 @@ end)
 
 -- Isolated Execution via run(function())
 run(function()
-    local RenderTab = vape.Categories.Render or vape.Categories.Utility
-    if not RenderTab then return end
+    -- Accessing the Utility category directly
+    local UtilityTab = vape.Categories.Utility or vape.Categories.Blatant
+    if not UtilityTab then return end
 
-    local Optimizer = {Enabled = false}
-    local FPSCap = {Value = 60}
-    local LowGraphics = {Enabled = false}
+    local CustomFFlags = {Enabled = false}
+    local FlagName = {Value = "FFlagDebugDisplayFPS"}
+    local FlagValue = {Value = "True"}
 
-    Optimizer = RenderTab:CreateModule({
-        Name = "ClientOptimizer",
+    -- Module Registration
+    CustomFFlags = UtilityTab:CreateModule({
+        Name = "FFlagManager",
         Function = function(callback)
             if callback then
-                -- Simulating 'FFlagTaskSchedulerLimitTargetFps'
-                setfpscap(FPSCap.Value)
-                
-                -- Simulating 'FFlagDebugGraphicsDisableDirect3D11' behavior
-                if LowGraphics.Enabled then
-                    settings().Rendering.QualityLevel = 1
-                    for _, v in pairs(workspace:GetDescendants()) do
-                        if v:IsA("PostProcessEffect") then
-                            v.Enabled = false
-                        end
+                -- Attempt to set the flag
+                local success, err = pcall(function()
+                    -- Check if the executor supports the function
+                    if setfflag then
+                        setfflag(FlagName.Value, FlagValue.Value)
+                        print("[FFlagManager] Set " .. FlagName.Value .. " to " .. FlagValue.Value)
+                    else
+                        print("[FFlagManager] Executor does not support setfflag.")
                     end
+                end)
+                
+                if not success then
+                    print("[FFlagManager] Error: " .. tostring(err))
                 end
-            else
-                -- Reset to standard
-                setfpscap(60)
-                settings().Rendering.QualityLevel = 0 -- Automatic
+                
+                -- Automatically turn off after running so it doesn't loop
+                task.delay(0.1, function()
+                    CustomFFlags:Toggle(false)
+                end)
             end
         end,
-        Tooltip = "Optimizes engine settings similar to FFlags."
+        Tooltip = "Sets a custom FFlag. Use the text boxes below to define the flag."
     })
 
-    FPSCap = Optimizer:CreateSlider({
-        Name = "FPS Cap",
-        Min = 30,
-        Max = 999,
-        Default = 144,
+    -- Setting for the Flag Name
+    FlagName = CustomFFlags:CreateTextBox({
+        Name = "Flag Name",
+        Default = "FFlagDebugDisplayFPS",
+        Placeholder = "FFlagName...",
         Function = function(val)
-            if Optimizer.Enabled then setfpscap(val) end
+            FlagName.Value = val
         end
     })
 
-    LowGraphics = Optimizer:CreateToggle({
-        Name = "Potato Mode",
-        Default = false,
-        Function = function(val) end
+    -- Setting for the Flag Value
+    FlagValue = CustomFFlags:CreateTextBox({
+        Name = "Flag Value",
+        Default = "True",
+        Placeholder = "Value (True/False/Number)",
+        Function = function(val)
+            FlagValue.Value = val
+        end
     })
 end)
 																																																																																																																																																																																																																					
