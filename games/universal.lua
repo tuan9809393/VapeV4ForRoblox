@@ -7906,3 +7906,96 @@ run(function()
     })
 end)
 
+-- Isolated Execution via run(function())
+run(function()
+    local Search
+    local List
+    local Color
+    local MaterialDropdown -- New dropdown for material selection
+    local Reference = {} -- Stores { [Part] = {OriginalColor, OriginalMaterial} }
+
+    -- Materials list for the dropdown
+    local materialList = {"Neon", "ForceField", "Glass", "Plastic", "SmoothPlastic"}
+
+    local function Add(v)
+        -- Check if the part name is in the user's Search list
+        if not table.find(List.ListEnabled, v.Name) then return end
+        
+        if v:IsA('BasePart') then
+            -- Store original state if not already stored
+            if not Reference[v] then
+                Reference[v] = {
+                    Color = v.Color,
+                    Material = v.Material
+                }
+            end
+            
+            -- Apply selected modifications
+            v.Material = Enum.Material[MaterialDropdown.Value]
+            v.Color = Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
+        end
+    end
+
+    -- Create the Module in the Render category
+    Search = vape.Categories.Render:CreateModule({
+        Name = 'Search',
+        Function = function(callback)
+            if callback then
+                -- Hook into workspace changes
+                Search:Clean(workspace.DescendantAdded:Connect(Add))
+                
+                -- Apply to existing parts
+                for _, v in workspace:GetDescendants() do
+                    Add(v)
+                end
+            else
+                -- Restore original part properties when disabled
+                for part, original in pairs(Reference) do
+                    if part and part.Parent then
+                        part.Color = original.Color
+                        part.Material = original.Material
+                    end
+                end
+                table.clear(Reference)
+            end
+        end,
+        Tooltip = 'Changes the material/color of selected parts.'
+    })
+
+    -- Text List for parts to search for
+    List = Search:CreateTextList({
+        Name = 'Parts',
+        Function = function()
+            if Search.Enabled then
+                Search:Toggle()
+                Search:Toggle()
+            end
+        end
+    })
+
+    -- Material Selection Dropdown
+    MaterialDropdown = Search:CreateDropdown({
+        Name = 'Material',
+        List = materialList,
+        Function = function()
+            if Search.Enabled then
+                for part, _ in pairs(Reference) do
+                    part.Material = Enum.Material[MaterialDropdown.Value]
+                end
+            end
+        end
+    })
+
+    -- Color Slider
+    Color = Search:CreateColorSlider({
+        Name = 'Color',
+        Function = function(hue, sat, val)
+            if Search.Enabled then
+                for part, _ in pairs(Reference) do
+                    part.Color = Color3.fromHSV(hue, sat, val)
+                end
+            end
+        end
+    })
+end)
+																																																																																																																																																																																																																						
