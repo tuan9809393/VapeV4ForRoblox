@@ -7908,94 +7908,52 @@ end)
 
 -- Isolated Execution via run(function())
 run(function()
-    local Search
-    local List
-    local Color
-    local MaterialDropdown
-    local Reference = {} -- Format: { [Part] = {Color = Color3, Material = Enum.Material} }
+    local RenderTab = vape.Categories.Render or vape.Categories.Utility
+    if not RenderTab then return end
 
-    -- Defining the list with proper Enum names
-    local materialNames = {"Neon", "ForceField", "Glass", "Plastic", "SmoothPlastic"}
+    local Optimizer = {Enabled = false}
+    local FPSCap = {Value = 60}
+    local LowGraphics = {Enabled = false}
 
-    local function Add(v)
-        -- Check if the part name matches your list in the GUI
-        if not table.find(List.ListEnabled, v.Name) then return end
-        
-        if v:IsA('BasePart') then
-            -- Save the original look before we mess with it
-            if not Reference[v] then
-                Reference[v] = {
-                    Color = v.Color,
-                    Material = v.Material
-                }
-            end
-            
-            -- Apply the new Material and Color
-            -- Using Enum.Material[string] to convert the dropdown selection
-            v.Material = Enum.Material[MaterialDropdown.Value]
-            v.Color = Color3.fromHSV(Color.Hue, Color.Sat, Color.Value)
-        end
-    end
-
-    Search = vape.Categories.Render:CreateModule({
-        Name = 'Search',
+    Optimizer = RenderTab:CreateModule({
+        Name = "ClientOptimizer",
         Function = function(callback)
             if callback then
-                -- Watch for new parts being added to the game
-                Search:Clean(workspace.DescendantAdded:Connect(Add))
+                -- Simulating 'FFlagTaskSchedulerLimitTargetFps'
+                setfpscap(FPSCap.Value)
                 
-                -- Check everything already in the game
-                for _, v in workspace:GetDescendants() do
-                    Add(v)
-                end
-            else
-                -- RESET: Put everything back to how it was
-                for part, original in pairs(Reference) do
-                    if part and part.Parent then
-                        part.Color = original.Color
-                        part.Material = original.Material
+                -- Simulating 'FFlagDebugGraphicsDisableDirect3D11' behavior
+                if LowGraphics.Enabled then
+                    settings().Rendering.QualityLevel = 1
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("PostProcessEffect") then
+                            v.Enabled = false
+                        end
                     end
                 end
-                table.clear(Reference)
+            else
+                -- Reset to standard
+                setfpscap(60)
+                settings().Rendering.QualityLevel = 0 -- Automatic
             end
         end,
-        Tooltip = 'Changes selected parts to materials like Neon or ForceField'
+        Tooltip = "Optimizes engine settings similar to FFlags."
     })
 
-    List = Search:CreateTextList({
-        Name = 'Parts',
-        Function = function()
-            -- Refresh the module if the list changes
-            if Search.Enabled then
-                Search:Toggle()
-                Search:Toggle()
-            end
-        end
-    })
-
-    -- This is where the material logic lives
-    MaterialDropdown = Search:CreateDropdown({
-        Name = 'Material',
-        List = materialNames,
+    FPSCap = Optimizer:CreateSlider({
+        Name = "FPS Cap",
+        Min = 30,
+        Max = 999,
+        Default = 144,
         Function = function(val)
-            if Search.Enabled then
-                for part, _ in pairs(Reference) do
-                    -- Update all currently "found" parts to the new material
-                    part.Material = Enum.Material[val]
-                end
-            end
+            if Optimizer.Enabled then setfpscap(val) end
         end
     })
 
-    Color = Search:CreateColorSlider({
-        Name = 'Color',
-        Function = function(hue, sat, val)
-            if Search.Enabled then
-                for part, _ in pairs(Reference) do
-                    part.Color = Color3.fromHSV(hue, sat, val)
-                end
-            end
-        end
+    LowGraphics = Optimizer:CreateToggle({
+        Name = "Potato Mode",
+        Default = false,
+        Function = function(val) end
     })
 end)
-																																																																																																																																																																																																																						
+																																																																																																																																																																																																																					
