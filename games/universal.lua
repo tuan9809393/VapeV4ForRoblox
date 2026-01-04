@@ -1012,7 +1012,7 @@ run(function()
 				repeat
 					if Mode.Value == 'Tool' then
 						local tool = getTool()
-						if tool and inputService:IsMouseButtonPressed(0) then
+						if tool and then
 							tool:Activate()
 						end
 					else
@@ -1283,7 +1283,7 @@ run(function()
 
 				repeat
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = ScreenCenter 
 					end
 					if AutoFire.Enabled then
 						local origin = AutoFireMode.Value == 'Camera' and gameCamera.CFrame or entitylib.isAlive and entitylib.character.RootPart.CFrame or CFrame.identity
