@@ -7926,7 +7926,7 @@ run(function() local CharacterOutline = {}
 	local CharacterOutlineColor = newcolor()
 	local GuiSync = {Enabled = false}
 	local outline = Instance.new('Highlight', GuiLibrary.MainGui)
-	CharacterOutline = vape.Categories.Misc:CreateModule({
+	CharacterOutline = vape.Categories.Legit:CreateModule({
 		Name = 'CharacterOutline',
 		Tooltip = 'Adds a cool outline to your character.',
 		Function = function(calling)
