@@ -7906,3 +7906,62 @@ run(function()
     })
 end)
 
+run("AutoDodge", function()
+    local AutoDodge = {Enabled = false}
+    local DodgeHeight = {Value = 10}
+    local DodgeSpeed = {Value = 0.1} -- How fast it toggles up/down
+    local killauraModule = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.OptionsButton -- Reference to find Killaura
+
+    local function getKillauraTarget()
+        -- Most Vape-based scripts store the current target in the Killaura API
+        -- This depends on your specific Killaura's variable name (usually .Target or .HasTarget)
+        local aura = GuiLibrary.ObjectsThatCanBeSaved.KillauraOptionsButton
+        if aura and aura.Api.Target then
+            return aura.Api.Target
+        end
+        return nil
+    end
+
+    AutoDodge = GuiLibrary.ObjectsThatCanBeSaved.BlatantWindow.Api.CreateOptionsButton({
+        Name = "AutoDodge",
+        Function = function(callback)
+            if callback then
+                task.spawn(function()
+                    while AutoDodge.Enabled do
+                        task.wait(DodgeSpeed.Value)
+                        
+                        -- Only dodge if we are actually fighting someone
+                        local target = getKillauraTarget()
+                        if target and lplr.Character and lplr.Character:FindFirstChild("HumanoidRootPart") then
+                            local hrp = lplr.Character.HumanoidRootPart
+                            
+                            -- Teleport Up
+                            hrp.CFrame = hrp.CFrame * CFrame.new(0, DodgeHeight.Value, 0)
+                            task.wait(DodgeSpeed.Value)
+                            
+                            -- Teleport Down (Return to original Y or slightly above ground)
+                            hrp.CFrame = hrp.CFrame * CFrame.new(0, -DodgeHeight.Value, 0)
+                        end
+                    end
+                end)
+            end
+        end
+    })
+
+    DodgeHeight = AutoDodge.CreateSlider({
+        Name = "Dodge Height",
+        Min = 1,
+        Max = 20,
+        Default = 10,
+        Function = function(val) end
+    })
+
+    DodgeSpeed = AutoDodge.CreateSlider({
+        Name = "Dodge Interval",
+        Min = 0.05,
+        Max = 0.5,
+        Default = 0.1,
+        Decimal = 2,
+        Function = function(val) end
+    })
+end)
