@@ -7921,4 +7921,158 @@ run(function()
 	})
 	
 end)
-	
+
+run(function()
+	local maid = Maid.new()
+	local StreamerMode = {Enabled = false}
+	local Config = {
+		Name = "chasemaser",
+		DisplayName = "chase",
+		UserId = "22808138"
+	}
+	local Players
+	local RunService
+	StreamerMode = vape.Categories.Legit:CreateModule({
+		Name = "StreamerMode",
+		Function = function(call)
+			if call then
+				Players = Players or Services.Players
+				RunService = RunService or Services.RunService
+				local function plrthing(obj, property)
+					for i,v in pairs(Players:GetChildren()) do
+						if v == lplr then
+							obj[property] = obj[property]:gsub(v.Name, Config["Name"])
+							obj[property] = obj[property]:gsub(v.DisplayName, Config["DisplayName"])
+							obj[property] = obj[property]:gsub(v.UserId, Config["UserId"])
+							pcall(function()
+								obj.RichText = true
+							end)
+						else continue end
+					end
+				end
+				
+				local function newobj(v)
+					if v:IsA("TextLabel") or v:IsA("TextButton") then
+						plrthing(v, "Text")
+						maid:Add(v:GetPropertyChangedSignal("Text"):connect(function()
+							plrthing(v, "Text")
+						end))
+					end
+					if v:IsA("ImageLabel") then
+						plrthing(v, "Image")
+						maid:Add(v:GetPropertyChangedSignal("Image"):connect(function()
+							plrthing(v, "Image")
+						end))
+					end
+				end
+
+				--[[local index, total = game:GetDescendants()
+				local con
+				con = RunService.RenderStepped:Connect(function()
+					local suc, err = pcall(function()
+						if index <= #total then
+							newobj(total[index])
+							index = index + 1
+						else
+							pcall(function()
+								con:Disconnect()
+							end)
+						end
+					end)
+					if not suc then
+						pcall(function()
+							con:Disconnect()
+						end)
+					end
+				end)
+				maid:Add(con)--]]
+				for i,v in pairs(game:GetDescendants()) do
+					newobj(v)
+				end
+				maid:Add(game.DescendantAdded:connect(newobj))
+			else
+				maid:Clean()
+			end
+		end
+	})
+	for i,v in pairs(Config) do
+		StreamerMode:CreateTextBox({
+			Name = tostring(i),
+			Default = v,
+			Function = function(val)
+				Config[i] = tostring(val)
+			end
+		})
+	end
+end)
+
+run(function() local CharacterOutline = {}
+	local CharacterOutlineColor = newcolor()
+	local GuiSync = {Enabled = false}
+	local outline = Instance.new('Highlight', GuiLibrary.MainGui)
+	CharacterOutline = vape.Categories.Legit:CreateModule({
+		Name = 'CharacterOutline',
+		Tooltip = 'Adds a cool outline to your character.',
+		Function = function(calling)
+			if calling then 
+				task.spawn(function()
+					repeat task.wait() until (lplr.Character or not CharacterOutline.Enabled)
+					if CharacterOutline.Enabled then 
+						local oldhighlight = lplr.Character:FindFirstChildWhichIsA('Highlight')
+						if oldhighlight then 
+							oldhighlight.Adornee = nil 
+						end
+						outline.FillTransparency = 1
+						outline.Adornee = lplr.Character
+						if GuiSync.Enabled then
+							if shared.RiseMode and GuiLibrary.GUICoreColor and GuiLibrary.GUICoreColorChanged then
+								outline.OutlineColor = GuiLibrary.GUICoreColor
+								CharacterOutline:Clean(GuiLibrary.GUICoreColorChanged.Event:Connect(function()
+									outline.OutlineColor = GuiLibrary.GUICoreColor
+								end))
+							else
+								local color = vape.GUIColor
+								outline.OutlineColor = Color3.fromHSV(color.Hue, color.Sat, color.Value)
+								CharacterOutline:Clean(runservice.Heartbeat:Connect(function()
+									if CharacterOutline.Enabled then
+										color = vape.GUIColor
+										outline.OutlineColor = Color3.fromHSV(color.Hue, color.Sat, color.Value)
+									end
+								end))
+							end
+						end
+						CharacterOutline:Clean(lplr.Character.DescendantAdded:Connect(function(instance)
+							if instance:IsA('Highlight') then 
+								instance.Adornee = nil
+							end 
+						end))
+						CharacterOutline:Clean(runService.Heartbeat:Connect(function()
+							outline.Adornee = (CharacterOutline.Enabled and lplr.Character or outline.Adornee)
+						end))
+						CharacterOutline:Clean(lplr.CharacterAdded:Connect(function()
+							CharacterOutline.ToggleButton()
+							CharacterOutline.ToggleButton()
+						end))
+					end
+				end)
+			else
+				outline.Adornee = nil
+			end
+		end
+	})
+	GuiSync = CharacterOutline:CreateToggle({
+		Name = "Sync with GUI Color",
+		Function = function()
+			if CharacterOutline.Enabled then 
+				CharacterOutline:Toggle(false)
+				CharacterOutline:Toggle(false)
+			end
+		end
+	})
+	CharacterOutlineColor = CharacterOutline:CreateColorSlider({
+		Name = 'Color',
+		Function = function()
+			pcall(function() outline.OutlineColor = Color3.fromHSV(CharacterOutlineColor.Hue, CharacterOutlineColor.Sat, CharacterOutlineColor.Value) end)
+		end
+	})
+end)
