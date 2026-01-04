@@ -7922,3 +7922,73 @@ run(function()
 	
 end)
 	
+run(function() local CharacterOutline = {}
+	local CharacterOutlineColor = newcolor()
+	local GuiSync = {Enabled = false}
+	local outline = Instance.new('Highlight', GuiLibrary.MainGui)
+	CharacterOutline = vape.Categories.Misc:CreateModule({
+		Name = 'CharacterOutline',
+		Tooltip = 'Adds a cool outline to your character.',
+		Function = function(calling)
+			if calling then 
+				task.spawn(function()
+					repeat task.wait() until (lplr.Character or not CharacterOutline.Enabled)
+					if CharacterOutline.Enabled then 
+						local oldhighlight = lplr.Character:FindFirstChildWhichIsA('Highlight')
+						if oldhighlight then 
+							oldhighlight.Adornee = nil 
+						end
+						outline.FillTransparency = 1
+						outline.Adornee = lplr.Character
+						if GuiSync.Enabled then
+							if shared.RiseMode and GuiLibrary.GUICoreColor and GuiLibrary.GUICoreColorChanged then
+								outline.OutlineColor = GuiLibrary.GUICoreColor
+								CharacterOutline:Clean(GuiLibrary.GUICoreColorChanged.Event:Connect(function()
+									outline.OutlineColor = GuiLibrary.GUICoreColor
+								end))
+							else
+								local color = vape.GUIColor
+								outline.OutlineColor = Color3.fromHSV(color.Hue, color.Sat, color.Value)
+								CharacterOutline:Clean(runservice.Heartbeat:Connect(function()
+									if CharacterOutline.Enabled then
+										color = vape.GUIColor
+										outline.OutlineColor = Color3.fromHSV(color.Hue, color.Sat, color.Value)
+									end
+								end))
+							end
+						end
+						CharacterOutline:Clean(lplr.Character.DescendantAdded:Connect(function(instance)
+							if instance:IsA('Highlight') then 
+								instance.Adornee = nil
+							end 
+						end))
+						CharacterOutline:Clean(runService.Heartbeat:Connect(function()
+							outline.Adornee = (CharacterOutline.Enabled and lplr.Character or outline.Adornee)
+						end))
+						CharacterOutline:Clean(lplr.CharacterAdded:Connect(function()
+							CharacterOutline.ToggleButton()
+							CharacterOutline.ToggleButton()
+						end))
+					end
+				end)
+			else
+				outline.Adornee = nil
+			end
+		end
+	})
+	GuiSync = CharacterOutline:CreateToggle({
+		Name = "Sync with GUI Color",
+		Function = function()
+			if CharacterOutline.Enabled then 
+				CharacterOutline:Toggle(false)
+				CharacterOutline:Toggle(false)
+			end
+		end
+	})
+	CharacterOutlineColor = CharacterOutline:CreateColorSlider({
+		Name = 'Color',
+		Function = function()
+			pcall(function() outline.OutlineColor = Color3.fromHSV(CharacterOutlineColor.Hue, CharacterOutlineColor.Sat, CharacterOutlineColor.Value) end)
+		end
+	})
+end)
