@@ -3827,6 +3827,50 @@ run(function()
 		Tooltip = 'Hides teammates & non targetable entities'
 	})
 end)
+
+run(function()
+    local CharacterEditor = {Enabled = true}
+    local RevertTable = {}
+    local ExcludeTable = {ObjectList = {}}
+    local function isExcluded(part)
+        local name = part.Name or tostring(part)
+        for i,v in pairs(ExcludeTable.ObjectList) do
+            name, v = tostring(name), tostring(v)
+            if v == name then return true end
+            if string.lower(name) == string.lower(v) then return end
+        end
+    end
+    local function savePart(part)
+        table.insert(RevertTable, {
+            Part = part,
+            Material = part.Material
+        })
+    end
+    CharacterEditor = vape.Categories.Render:CreateModule({
+        Name = "TransparentCharacter",
+        Function = function(call)
+            if call then
+                repeat task.wait();
+                    if entityLibrary.isAlive and game:GetService("Players").LocalPlayer.Character and game:GetService("Players").LocalPlayer.Character:IsA("Model") then
+                        for _, part in pairs(game:GetService("Players").LocalPlayer.Character:GetDescendants()) do
+                            if not isExcluded(part) and part:IsA("BasePart") then savePart(part); part.Material = Enum.Material.ForceField end
+                        end
+                    end
+                until (not CharacterEditor.Enabled)
+            else
+				for i,v in pairs(RevertTable) do
+					pcall(function() v.Part.Material = Enum.Material[tostring(v.Material)] end)
+				end
+            end
+        end
+    })
+    CharacterEditor.Restart = function() if CharacterEditor.Enabled then CharacterEditor:Toggle(false); CharacterEditor:Toggle(false) end end
+    ExcludeTable = CharacterEditor:CreateTextList({
+        Name = "Exclude character parts",
+        TempText = "Example: Cape",
+        Function = CharacterEditor.Restart
+    })
+end)
 	
 run(function()
 	local ESP
