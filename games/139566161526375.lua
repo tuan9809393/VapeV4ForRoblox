@@ -1240,3 +1240,63 @@ run(function()
 	})
 end)
 	
+run(function()
+	local ProjectileAura
+	local Targets
+	local Range
+	ProjectileAura = vape.Categories.Blatant:CreateModule({
+		Name = 'ProjectileAura',
+		Function = function(callback)
+			local tool = getTool()
+			local attacked = {}
+			if tool and tool:HasTag('Sword') then
+				repeat
+					local plrs = entitylib.AllPosition({
+						Range = Range.Value,
+						Wallcheck = Targets.Walls.Enabled or nil,
+						Part = 'RootPart',
+						Players = Targets.Players.Enabled,
+						NPCs = Targets.NPCs.Enabled,
+						Limit = 1
+					})
+					if #plrs > 1 then
+						print(callback, plrs)
+					end
+				until not ProjectileAura.Enabled
+			end
+		end,
+		Tooltip = 'Shoots people around you'
+	})
+	Targets = ProjectileAura:CreateTargets({
+		Players = true,
+		Walls = true
+	})
+	Range = ProjectileAura:CreateSlider({
+		Name = 'Range',
+		Min = 1,
+		Max = 50,
+		Default = 50,
+		Suffix = function(val)
+			return val == 1 and 'stud' or 'studs'
+		end
+	})
+end)
+
+run(function()
+	local NoClickDelay
+	local old
+
+	NoClickDelay = vape.Categories.Combat:CreateModule({
+		Name = 'NoClickDelay',
+		Function = function(callback)
+			if callback then
+				old = hookfunction(bd.Blink.player_state.update_cps.fire, function()
+				end)
+			else
+				hookfunction(bd.Blink.player_state.update_cps.fire, old)
+				old = nil
+			end
+		end,
+		Tooltip = 'Removes the CPS cap'
+	})
+end)
