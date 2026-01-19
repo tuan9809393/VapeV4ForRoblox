@@ -1239,48 +1239,6 @@ run(function()
 		end
 	})
 end)
-	
-run(function()
-	local ProjectileAura
-	local Targets
-	local Range
-	ProjectileAura = vape.Categories.Blatant:CreateModule({
-		Name = 'ProjectileAura',
-		Function = function(callback)
-			local tool = getTool()
-			local attacked = {}
-			if tool and tool:HasTag('Sword') then
-				repeat
-					local plrs = entitylib.AllPosition({
-						Range = Range.Value,
-						Wallcheck = Targets.Walls.Enabled or nil,
-						Part = 'RootPart',
-						Players = Targets.Players.Enabled,
-						NPCs = Targets.NPCs.Enabled,
-						Limit = 1
-					})
-					if #plrs > 1 then
-						print(callback, plrs)
-					end
-				until not ProjectileAura.Enabled
-			end
-		end,
-		Tooltip = 'Shoots people around you'
-	})
-	Targets = ProjectileAura:CreateTargets({
-		Players = true,
-		Walls = true
-	})
-	Range = ProjectileAura:CreateSlider({
-		Name = 'Range',
-		Min = 1,
-		Max = 50,
-		Default = 50,
-		Suffix = function(val)
-			return val == 1 and 'stud' or 'studs'
-		end
-	})
-end)
 
 run(function()
 	local NoClickDelay
