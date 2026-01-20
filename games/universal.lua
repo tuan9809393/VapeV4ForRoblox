@@ -324,26 +324,6 @@ for name in SpeedMethods do
 end
 
 run(function()
-	local oldstart = entitylib.start
-	local function teamcheck(ent)
-		local suc, res = pcall(function()
-			if ent.Team or ent.Character.Humanoid.Team then
-				return lplr.Team ~= (ent.Team or ent.Character.Humanoid.Team)
-			end
-		end)
-		return (suc and res) or true
-	end
-	local function customEntity(ent)
-		if not ent:HasTag('NPC') then return end
-		if ent:IsDescendantOf(workspace) then
-			if ent.Name:find("%[BOT%]") then
-				ent.Name = ent.Name:gsub('<font.->', ''):gsub('</font>', ''):gsub('%[BOT%]%s*', '')
-			end
-			entitylib.addEntity(ent, nil, ent:HasTag('NPC') and function(self)
-				return teamcheck(self)
-			end)
-		end
-	end
 
 	entitylib.start = function()
 		oldstart()
