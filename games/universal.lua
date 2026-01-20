@@ -324,20 +324,6 @@ for name in SpeedMethods do
 end
 
 run(function()
-
-	entitylib.start = function()
-		oldstart()
-		if entitylib.Running then
-			for _, ent in collectionService:GetTagged('NPC') do
-				customEntity(ent)
-			end
-			table.insert(entitylib.Connections, collectionService:GetInstanceAddedSignal('NPC'):Connect(customEntity))
-			table.insert(entitylib.Connections, collectionService:GetInstanceRemovedSignal('NPC'):Connect(function(ent)
-				entitylib.removeEntity(ent)
-			end))
-		end
-	end
-
 	entitylib.getUpdateConnections = function(ent)
 		local hum = ent.Humanoid
 		return {
