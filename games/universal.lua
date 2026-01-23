@@ -379,43 +379,6 @@ run(function()
 end)
 
 run(function()
-	local oldstart = entitylib.start
-	local function teamcheck(ent)
-		local suc, res = pcall(function()
-			if ent.Team or ent.Character.Humanoid.Team then
-				return lplr.Team ~= (ent.Team or ent.Character.Humanoid.Team)
-			end
-		end)
-		return (suc and res) or true
-	end
-	local function customEntity(ent)
-		if not ent:HasTag('NPC') then return end
-		if ent:IsDescendantOf(workspace) then
-			if ent.Name:find("%[BOT%]") then
-				ent.Name = ent.Name:gsub('<font.->', ''):gsub('</font>', ''):gsub('%[BOT%]%s*', '')
-			end
-			entitylib.addEntity(ent, nil, ent:HasTag('NPC') and function(self)
-				return teamcheck(self)
-			end)
-		end
-	end
-
-	entitylib.start = function()
-		oldstart()
-		if entitylib.Running then
-			for _, ent in collectionService:GetTagged('NPC') do
-				customEntity(ent)
-			end
-			table.insert(entitylib.Connections, collectionService:GetInstanceAddedSignal('NPC'):Connect(customEntity))
-			table.insert(entitylib.Connections, collectionService:GetInstanceRemovedSignal('NPC'):Connect(function(ent)
-				entitylib.removeEntity(ent)
-			end))
-		end
-	end
-end)
-entitylib.start()
-
-run(function()
 	function whitelist:get(plr)
 		local plrstr = self.hashes[plr.Name..plr.UserId]
 		for _, v in self.data.WhitelistedUsers do
