@@ -331,6 +331,7 @@ run(function()
 			hum:GetPropertyChangedSignal('MaxHealth'),
 			{
 				Connect = function()
+					-- NPCs won't have a 'Player' object, so we check that first
 					ent.Friend = ent.Player and isFriend(ent.Player) or nil
 					ent.Target = ent.Player and isTarget(ent.Player) or nil
 					return {
@@ -342,28 +343,45 @@ run(function()
 	end
 
 	entitylib.targetCheck = function(ent)
+		-- 1. If the entity is explicitly marked as an NPC, target it immediately
+		if ent.NPC or not ent.Player then 
+			return true 
+		end
+
+		-- 2. Team and Whitelist checks for Players only
 		if ent.TeamCheck then
 			return ent:TeamCheck()
 		end
-		if ent.NPC then return true end
+
+		-- Skip friends and whitelisted players
 		if isFriend(ent.Player) then return false end
 		if not select(2, whitelist:get(ent.Player)) then return false end
+
+		-- 3. Server Team Logic
 		if vape.Categories.Main.Options['Teams by server'].Enabled then
 			if not lplr.Team then return true end
 			if not ent.Player.Team then return true end
 			if ent.Player.Team ~= lplr.Team then return true end
 			return #ent.Player.Team:GetPlayers() == #playersService:GetPlayers()
 		end
+
 		return true
 	end
 
 	entitylib.getEntityColor = function(ent)
-		ent = ent.Player
-		if not (ent and vape.Categories.Main.Options['Use team color'].Enabled) then return end
-		if isFriend(ent, true) then
+		-- Ensure NPC targeting doesn't crash the color logic
+		if not ent.Player then 
+			return Color3.fromRGB(255, 0, 0) -- Default Red for NPCs/Bots
+		end
+		
+		local player = ent.Player
+		if not (player and vape.Categories.Main.Options['Use team color'].Enabled) then return end
+		
+		if isFriend(player, true) then
 			return Color3.fromHSV(vape.Categories.Friends.Options['Friends color'].Hue, vape.Categories.Friends.Options['Friends color'].Sat, vape.Categories.Friends.Options['Friends color'].Value)
 		end
-		return tostring(ent.TeamColor) ~= 'White' and ent.TeamColor.Color or nil
+		
+		return tostring(player.TeamColor) ~= 'White' and player.TeamColor.Color or nil
 	end
 
 	vape:Clean(function()
@@ -377,6 +395,7 @@ run(function()
 		gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA('Camera')
 	end))
 end)
+
 
 run(function()
 	function whitelist:get(plr)
