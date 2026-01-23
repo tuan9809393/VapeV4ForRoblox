@@ -324,6 +324,7 @@ for name in SpeedMethods do
 end
 
 run(function()
+	-- [Script 1] EntityLib Base Overrides
 	entitylib.getUpdateConnections = function(ent)
 		local hum = ent.Humanoid
 		return {
@@ -366,17 +367,68 @@ run(function()
 		return tostring(ent.TeamColor) ~= 'White' and ent.TeamColor.Color or nil
 	end
 
+	-- [Script 2] NPC / Tag Handling Helpers
+	local oldstart = entitylib.start
+	local function teamcheck(ent)
+		local suc, res = pcall(function()
+			if ent.Team or ent.Character.Humanoid.Team then
+				return lplr.Team ~= (ent.Team or ent.Character.Humanoid.Team)
+			end
+		end)
+		return (suc and res) or true
+	end
+
+	local function customEntity(ent)
+		if not ent:HasTag('NPC') then return end
+		if ent:IsDescendantOf(workspace) then
+			-- Name cleanup for Bots
+			if ent.Name:find("%[BOT%]") then
+				ent.Name = ent.Name:gsub('<font.->', ''):gsub('</font>', ''):gsub('%[BOT%]%s*', '')
+			end
+			-- Add entity with custom team check
+			entitylib.addEntity(ent, nil, ent:HasTag('NPC') and function(self)
+				return teamcheck(self)
+			end)
+		end
+	end
+
+	-- [Script 2] Wrap the Start Function
+	entitylib.start = function()
+		oldstart() -- Run original start (Player tracking)
+		if entitylib.Running then
+			-- Add existing NPCs
+			for _, ent in collectionService:GetTagged('NPC') do
+				customEntity(ent)
+			end
+			-- Listen for new NPCs
+			table.insert(entitylib.Connections, collectionService:GetInstanceAddedSignal('NPC'):Connect(customEntity))
+			table.insert(entitylib.Connections, collectionService:GetInstanceRemovedSignal('NPC'):Connect(function(ent)
+				entitylib.removeEntity(ent)
+			end))
+		end
+	end
+
+	-- [Script 1] Events & Cleanup
 	vape:Clean(function()
 		entitylib.kill()
 		entitylib = nil
 	end)
 	vape:Clean(vape.Categories.Friends.Update.Event:Connect(function() entitylib.refresh() end))
 	vape:Clean(vape.Categories.Targets.Update.Event:Connect(function() entitylib.refresh() end))
-	vape:Clean(entitylib.Events.LocalAdded:Connect(updateVelocity))
+	
+	-- Added safety check for 'updateVelocity' just in case it's not global
+	if updateVelocity then
+		vape:Clean(entitylib.Events.LocalAdded:Connect(updateVelocity))
+	end
+
 	vape:Clean(workspace:GetPropertyChangedSignal('CurrentCamera'):Connect(function()
 		gameCamera = workspace.CurrentCamera or workspace:FindFirstChildWhichIsA('Camera')
 	end))
 end)
+
+-- Start the entity library
+entitylib.start()
+
 
 run(function()
 	function whitelist:get(plr)
