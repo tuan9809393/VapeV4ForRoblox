@@ -14,7 +14,7 @@ end
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/sstvskids/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/tuan9809393/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -1071,7 +1071,7 @@ run(function()
 				repeat
 					if Mode.Value == 'Tool' then
 						local tool = getTool()
-						if tool and inputService:IsMouseButtonPressed(0) then
+						if tool then
 							tool:Activate()
 						end
 					else
@@ -1342,7 +1342,7 @@ run(function()
 
 				repeat
 					if CircleObject then
-						CircleObject.Position = inputService:GetMouseLocation()
+						CircleObject.Position = screencenter
 					end
 					if AutoFire.Enabled then
 						local origin = AutoFireMode.Value == 'Camera' and gameCamera.CFrame or entitylib.isAlive and entitylib.character.RootPart.CFrame or CFrame.identity
