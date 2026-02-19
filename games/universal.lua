@@ -6199,30 +6199,48 @@ run(function()
 	})
 end)
 	
-run(function()
-	local Disabler
-	
-	local function characterAdded(char)
-		for _, v in getconnections(char.RootPart:GetPropertyChangedSignal('CFrame')) do
-			hookfunction(v.Function, function() end)
-		end
-		for _, v in getconnections(char.RootPart:GetPropertyChangedSignal('Velocity')) do
-			hookfunction(v.Function, function() end)
-		end
-	end
-	
-	Disabler = vape.Categories.Utility:CreateModule({
-		Name = 'Disabler',
-		Function = function(callback)
-			if callback then
-				Disabler:Clean(entitylib.Events.LocalAdded:Connect(characterAdded))
-				if entitylib.isAlive then
-					characterAdded(entitylib.character)
-				end
-			end
-		end,
-		Tooltip = 'Disables GetPropertyChangedSignal detections for movement'
-	})
+Run(function()
+    local Disabler
+    
+    -- Function to disable movement listeners
+    local function characterAdded(char)
+        local root = char:WaitForChild("HumanoidRootPart", 5)
+        if not root then return end
+        
+        for _, v in getconnections(root:GetPropertyChangedSignal('CFrame')) do
+            hookfunction(v.Function, function() end)
+        end
+        for _, v in getconnections(root:GetPropertyChangedSignal('Velocity')) do
+            hookfunction(v.Function, function() end)
+        end
+    end
+
+    -- Anti-Kick Logic
+    local oldKick
+    oldKick = hookmetamethod(game:GetService("Players").LocalPlayer, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        if not checkcaller() and method == "Kick" then
+            -- Vape Notification
+            vape.CustomObjects.OptionsButton:CreateNotification("Anti-Kick", "Blocked a client-side kick attempt.", 5)
+            return nil -- Blocks the kick
+        end
+        return oldKick(self, ...)
+    end)
+
+    -- Creating the Vape Module
+    Disabler = vape.Categories.Utility:CreateModule({
+        Name = 'Disabler',
+        Function = function(callback)
+            if callback then
+                -- Connect character events
+                Disabler:Clean(entitylib.Events.LocalAdded:Connect(characterAdded))
+                if entitylib.isAlive then
+                    characterAdded(entitylib.character)
+                end
+            end
+        end,
+        Tooltip = 'Disables movement detections & blocks client-side kicks'
+    })
 end)
 	
 run(function()
