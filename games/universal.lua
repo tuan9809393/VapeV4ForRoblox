@@ -2266,7 +2266,7 @@ run(function()
 	local function animationTrickery()
 		if entitylib.isAlive then
 			local anim = Instance.new('Animation')
-			anim.AnimationId = 'http://www.roblox.com/asset/?id=18537363391'
+			anim.AnimationId = 'http://www.roblox.com/asset/?id=91133306449431'
 			animtrack = entitylib.character.Humanoid.Animator:LoadAnimation(anim)
 			animtrack.Priority = Enum.AnimationPriority.Action4
 			animtrack:Play(0, 1, 0)
